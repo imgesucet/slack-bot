@@ -1,0 +1,64 @@
+image: docker:19.03.13
+services:
+  - name: docker:19.03.13-dind
+    command: ['--mtu=1480']
+
+variables:
+  ECR_REPO: rg.nl-ams.scw.cloud/defytrendsregistry
+  CONTAINER_IMAGE: $ECR_REPO/gptinslack:${CI_COMMIT_SHORT_SHA}
+  DOCKER_DRIVER: overlay2
+  DOCKER_HOST: tcp://localhost:2375
+  DOCKER_TLS_CERTDIR: ''
+  GIT_DEPTH: '0' # Tells git to fetch all the branches of the project, required by the analysis task
+
+# K8S_CLUSTER == SERVER
+# K8S_USER_TOKEN == USER_TOKEN
+
+.helm_deploy_template: &helm_deploy
+  dependencies: []
+  script:
+    - kubectl config set-cluster "defytrends-${ENVIRONMENT}-cluster" --server="${K8S_CLUSTER}" --insecure-skip-tls-verify=true
+    - kubectl config set-credentials gitlab --token="${K8S_USER_TOKEN}" #
+    - kubectl config set-context ${K8S_CONTEXT} --cluster="defytrends-${ENVIRONMENT}-cluster" --user=gitlab
+    - kubectl config use-context ${K8S_CONTEXT}
+    - echo CI_COMMIT_SHORT_SHA=${CI_COMMIT_SHORT_SHA}
+    - helm package --app-version=${CI_COMMIT_SHORT_SHA} helm/${PROJECT_NAME}
+    - helm upgrade --install ${PROJECT_NAME} -f helm/${PROJECT_NAME}/values.${K8S_NAMESPACE}.yaml ./${PROJECT_NAME}-0.1.0.tgz --set ${PROJECT_NAME}.tag=${CI_COMMIT_SHORT_SHA} --namespace ${K8S_NAMESPACE}
+    - helm history ${PROJECT_NAME} -n ${K8S_NAMESPACE}
+
+stages:
+  - build
+  - deploy
+
+build:
+  stage: build
+  only:
+    - master
+  interruptible: true
+  script:
+    - docker login ${ECR_REPO} -u nologin -p ${CI_DOCKER_PSW_LOCAL}
+    - IMAGE_TAG="$(echo $CI_COMMIT_SHA | head -c 8)"
+    - docker build --build-arg GIT_COMMIT=${CI_COMMIT_SHA} --build-arg GIT_TAG=${CI_COMMIT_TAG} -t ${CONTAINER_IMAGE} .
+    - docker tag ${CONTAINER_IMAGE} ${CONTAINER_IMAGE}
+    - docker tag ${CONTAINER_IMAGE} $ECR_REPO/gptinslack:latest
+    - docker tag ${CONTAINER_IMAGE} $ECR_REPO/gptinslack:${CI_COMMIT_SHORT_SHA}
+    - docker push ${CONTAINER_IMAGE}
+    - docker push $ECR_REPO/gptinslack:latest
+    - docker push $ECR_REPO/gptinslack:${CI_COMMIT_SHORT_SHA}
+
+deploy-dev:
+  stage: deploy
+  only:
+    - master
+  variables:
+    ENVIRONMENT: dev
+    K8S_CONTEXT: dev
+    K8S_NAMESPACE: dev
+    PROJECT_NAME: gptinslack
+  environment:
+    name: $ENVIRONMENT
+    url: https://gptinslack.defytrends.dev/
+  image: dtzar/helm-kubectl
+  <<: *helm_deploy
+
+

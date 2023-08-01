@@ -1,0 +1,66 @@
+# Default values for gptinslack.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+gptinslack:
+  image: rg.nl-ams.scw.cloud/defytrendsregistry/gptinslack
+  tag: latest
+  # set to never when using local images
+  pullPolicy: Always
+  envsec:
+    OPEN_API_TOKEN: OPEN_API_TOKEN
+    SLACK_APP_TOKEN: SLACK_APP_TOKEN
+    SLACK_BOT_TOKEN: SLACK_BOT_TOKEN
+  env:
+    PORT: 9898
+    DEFAULT_OPENAI_TIMEOUT_SECONDS: 30
+    DEFAULT_OPENAI_MODEL: gpt-3.5-turbo
+    DEFAULT_OPENAI_TEMPERATURE: 1
+
+healthcheck:
+  url: /api/healthcheck
+  port: 9898
+
+service:
+  type: ClusterIP
+  port: 9898
+  externalPort: 9898
+  internalPort: 9898
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: 25m
+  path: /
+  pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - gptinslack.defytrends.dev
+      secretName: dev-defytrends-dev-tls
+  hosts:
+    - gptinslack.defytrends.dev
+  servicePort: 9898
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

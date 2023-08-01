@@ -1,0 +1,14 @@
+# Default values for each environment.
+
+## @param k8sVersion Override Kubernetes version
+##
+k8sVersion: "1.21.1"
+
+ingress:
+  enabled: false
+
+
+resources:
+  requests:
+    cpu: "50m"
+    memory: "64Mi"
