@@ -1,5 +1,7 @@
 import logging
 import os
+from flask import Flask, jsonify
+import threading
 
 from slack_bolt import App, BoltContext
 from slack_sdk.web import WebClient
@@ -25,6 +27,27 @@ from app.i18n import translate
 
 
 if __name__ == "__main__":
+
+    # Create a Flask application
+    healthcheck_app = Flask(__name__)
+
+
+    # Define a simple healthcheck endpoint
+    @healthcheck_app.route("/healthcheck", methods=['GET'])
+    def health_check():
+        return jsonify({"status": "ok"}), 200
+
+
+    # Create a function that starts the Flask server
+    def start_healthcheck_server():
+        port = int(os.getenv('PORT', 9891))
+        healthcheck_app.run(host='0.0.0.0', port=port)
+
+
+    # Wrap your Flask server start inside a thread, so it doesn't block your Slack bot
+    healthcheck_thread = threading.Thread(target=start_healthcheck_server)
+    healthcheck_thread.start()
+
     from slack_bolt.adapter.socket_mode import SocketModeHandler
 
     logging.basicConfig(level=SLACK_APP_LOG_LEVEL)
