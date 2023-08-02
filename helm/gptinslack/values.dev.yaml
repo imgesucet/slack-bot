@@ -10,9 +10,10 @@ gptinslack:
   # set to never when using local images
   pullPolicy: Always
   envsec:
-    OPEN_API_TOKEN: OPEN_API_TOKEN
+    OPENAI_API_KEY: OPENAI_API_KEY
     SLACK_APP_TOKEN: SLACK_APP_TOKEN
     SLACK_BOT_TOKEN: SLACK_BOT_TOKEN
+    SLACK_SIGNING_SECRET: SLACK_SIGNING_SECRET
   env:
     PORT: 9898
     DEFAULT_OPENAI_TIMEOUT_SECONDS: 30
