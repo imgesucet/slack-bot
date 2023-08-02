@@ -21,7 +21,7 @@ gptinslack:
     DEFAULT_OPENAI_TEMPERATURE: 1
 
 healthcheck:
-  url: /api/healthcheck
+  url: /healthcheck
   port: 9898
 
 service:
