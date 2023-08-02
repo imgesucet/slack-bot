@@ -12,7 +12,7 @@ features:
     always_online: true
 oauth_config:
   redirect_urls:
-    - https://TODO.amazonaws.com/slack/oauth_redirect
+    - https://gptinslack.defytrends.dev/slack/oauth_redirect
   scopes:
     bot:
       - app_mentions:read
@@ -25,7 +25,7 @@ oauth_config:
       - users:read
 settings:
   event_subscriptions:
-    request_url: https://TODO.amazonaws.com/slack/events
+    request_url: https://gptinslack.defytrends.dev/slack/events
     bot_events:
       - app_home_opened
       - app_mention
@@ -37,7 +37,7 @@ settings:
       - tokens_revoked
   interactivity:
     is_enabled: true
-    request_url: https://TODO.amazonaws.com/slack/events
+    request_url: https://gptinslack.defytrends.dev/slack/events
   org_deploy_enabled: false
   socket_mode_enabled: false
   token_rotation_enabled: false

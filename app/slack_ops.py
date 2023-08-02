@@ -93,6 +93,15 @@ def build_home_tab(message: str, configure_label: str) -> dict:
         "type": "home",
         "blocks": [
             {
+                "dispatch_action": True,
+                "type": "input",
+                "element": {
+                    "type": "plain_text_input",
+                    "action_id": "plain_text_input-action",
+                },
+                "label": {"type": "plain_text", "text": "Label", "emoji": True},
+            },
+            {
                 "type": "section",
                 "text": {
                     "type": "mrkdwn",
@@ -105,6 +114,7 @@ def build_home_tab(message: str, configure_label: str) -> dict:
                     "style": "primary",
                     "value": "api_key",
                 },
-            }
+            },
+
         ],
     }

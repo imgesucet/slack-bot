@@ -37,6 +37,7 @@ from app.utils import redact_string
 def just_ack(ack: Ack):
     ack()
 
+POST_GRES_DICT = {}
 
 TIMEOUT_ERROR_MESSAGE = (
     f":warning: Sorry! It looks like OpenAI didn't respond within {OPENAI_TIMEOUT_SECONDS} seconds. "
@@ -44,6 +45,27 @@ TIMEOUT_ERROR_MESSAGE = (
 )
 DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
 
+URL_PATTERN_POSTGRES = re.compile(
+    r'^(?:http|ftp)s?://'  # http:// or https://
+    r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
+    r'localhost|'  # localhost...
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}|'  # ...or IP
+    r'postgres:\/\/[^\s\/$.?#].[^\s]*$)'  # PostgreSQL URL
+    r'(?::\d+)?'  # optional port
+    r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+
+def is_valid_url(string):
+    return bool(re.match(URL_PATTERN_POSTGRES, string))
+
+def extract_postgres_url(sentence):
+    url_pattern = re.compile(
+        r'postgres:\/\/[^\s\/$.?#].[^\s]*$', re.IGNORECASE)
+
+    match = re.search(url_pattern, sentence)
+    if match:
+        return match.group(0)
+    else:
+        return None
 
 def respond_to_app_mention(
     context: BoltContext,
@@ -218,6 +240,27 @@ def respond_to_new_message(
 
     wip_reply = None
     try:
+
+        messages_in_context = client.conversations_replies(
+            channel=context.channel_id,
+            ts=payload["ts"],
+            include_all_metadata=True,
+            limit=1000,
+        ).get("messages", [])
+        last_message = messages_in_context[-1]
+        # print(f"--- the last message is :{last_message} \n")
+
+        for block in last_message['blocks']:
+            if block['type'] == 'link':
+                print("\n BLOCK --- ",block)
+                logger.info(f"BLOCK --- {block}")
+                if is_valid_url(block['url']):
+                    POST_GRES_URL = extract_postgres_url(block['url'])
+                if context.user_id not in POST_GRES_DICT:
+                    POST_GRES_DICT[context.user_id] = POST_GRES_URL
+            else:
+                continue
+
         is_in_dm_with_bot = payload.get("channel_type") == "im"
         is_no_mention_required = False
         thread_ts = payload.get("thread_ts")
