@@ -1,6 +1,8 @@
 import logging
+import os
 import re
 import time
+import requests
 
 from openai.error import Timeout
 from slack_bolt import App, Ack, BoltContext, BoltResponse
@@ -248,7 +250,7 @@ def respond_to_new_message(
             limit=1000,
         ).get("messages", [])
         last_message = messages_in_context[-1]
-        # print(f"--- the last message is :{last_message} \n")
+        print(f"--- the last message is :{last_message} \n")
 
         for block in last_message['blocks']:
             if block['type'] == 'link':
@@ -256,8 +258,11 @@ def respond_to_new_message(
                 logger.info(f"BLOCK --- {block}")
                 if is_valid_url(block['url']):
                     POST_GRES_URL = extract_postgres_url(block['url'])
-                if context.user_id not in POST_GRES_DICT:
+                    if POST_GRES_URL is not None:
+                        print(f"User have set own POST_GRES_URL={POST_GRES_URL}")
+                if POST_GRES_URL is not None and context.user_id not in POST_GRES_DICT:
                     POST_GRES_DICT[context.user_id] = POST_GRES_URL
+                    print(f"User previously already set own POST_GRES_URL={POST_GRES_URL}")
             else:
                 continue
 
@@ -373,9 +378,24 @@ def respond_to_new_message(
                 }
             )
 
-        loading_text = translate(
-            openai_api_key=openai_api_key, context=context, text=DEFAULT_LOADING_TEXT
-        )
+        # loading_text = translate(
+        #     openai_api_key=openai_api_key, context=context, text=DEFAULT_LOADING_TEXT
+        # )
+
+        API_KEY = os.environ.get("API_KEY", "123456wer12wegfqwtg24t2462f")
+        url = "https://genieapi.defytrends.dev/language_to_sql"
+        headers = {
+            "X-API-Key": API_KEY
+        }
+        params = {
+            "text_query": DEFAULT_LOADING_TEXT,
+            "table_name": "news_newsarticle",
+            "execute_sql": True
+        }
+
+        response = requests.get(url, headers=headers, params=params)
+        loading_text = response.json()
+
         wip_reply = post_wip_message(
             client=client,
             channel=context.channel_id,
