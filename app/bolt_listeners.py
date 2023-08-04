@@ -398,7 +398,7 @@ def respond_to_new_message(
             "X-API-Key": API_KEY
         }
         params = {
-            "text_query": DEFAULT_LOADING_TEXT,
+            "text_query": last_message["text"],
             "table_name": "news_newsarticle",
             "execute_sql": True
         }
@@ -410,66 +410,66 @@ def respond_to_new_message(
             client=client,
             channel=context.channel_id,
             thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            loading_text=loading_text,
+            loading_text=str(loading_text),
             messages=messages,
             user=user_id,
         )
 
-        (
-            messages,
-            num_context_tokens,
-            max_context_tokens,
-        ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
-        num_messages = len([msg for msg in messages if msg.get("role") != "system"])
-        if num_messages == 0:
-            update_wip_message(
-                client=client,
-                channel=context.channel_id,
-                ts=wip_reply["message"]["ts"],
-                text=f":warning: The previous message is too long ({num_context_tokens}/{max_context_tokens} prompt tokens).",
-                messages=messages,
-                user=context.user_id,
-            )
-        else:
-            stream = start_receiving_openai_response(
-                openai_api_key=openai_api_key,
-                model=context["OPENAI_MODEL"],
-                temperature=context["OPENAI_TEMPERATURE"],
-                messages=messages,
-                user=user_id,
-                openai_api_type=context["OPENAI_API_TYPE"],
-                openai_api_base=context["OPENAI_API_BASE"],
-                openai_api_version=context["OPENAI_API_VERSION"],
-                openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
-            )
-
-            latest_replies = client.conversations_replies(
-                channel=context.channel_id,
-                ts=wip_reply.get("ts"),
-                include_all_metadata=True,
-                limit=1000,
-            )
-            if (
-                latest_replies.get("messages", [])[-1]["ts"]
-                != wip_reply["message"]["ts"]
-            ):
-                # Since a new reply will come soon, this app abandons this reply
-                client.chat_delete(
-                    channel=context.channel_id,
-                    ts=wip_reply["message"]["ts"],
-                )
-                return
-
-            consume_openai_stream_to_write_reply(
-                client=client,
-                wip_reply=wip_reply,
-                context=context,
-                user_id=user_id,
-                messages=messages,
-                stream=stream,
-                timeout_seconds=OPENAI_TIMEOUT_SECONDS,
-                translate_markdown=TRANSLATE_MARKDOWN,
-            )
+        # (
+        #     messages,
+        #     num_context_tokens,
+        #     max_context_tokens,
+        # ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
+        # num_messages = len([msg for msg in messages if msg.get("role") != "system"])
+        # if num_messages == 0:
+        #     update_wip_message(
+        #         client=client,
+        #         channel=context.channel_id,
+        #         ts=wip_reply["message"]["ts"],
+        #         text=f":warning: The previous message is too long ({num_context_tokens}/{max_context_tokens} prompt tokens).",
+        #         messages=messages,
+        #         user=context.user_id,
+        #     )
+        # else:
+        #     stream = start_receiving_openai_response(
+        #         openai_api_key=openai_api_key,
+        #         model=context["OPENAI_MODEL"],
+        #         temperature=context["OPENAI_TEMPERATURE"],
+        #         messages=messages,
+        #         user=user_id,
+        #         openai_api_type=context["OPENAI_API_TYPE"],
+        #         openai_api_base=context["OPENAI_API_BASE"],
+        #         openai_api_version=context["OPENAI_API_VERSION"],
+        #         openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
+        #     )
+        #
+        #     latest_replies = client.conversations_replies(
+        #         channel=context.channel_id,
+        #         ts=wip_reply.get("ts"),
+        #         include_all_metadata=True,
+        #         limit=1000,
+        #     )
+        #     if (
+        #         latest_replies.get("messages", [])[-1]["ts"]
+        #         != wip_reply["message"]["ts"]
+        #     ):
+        #         # Since a new reply will come soon, this app abandons this reply
+        #         client.chat_delete(
+        #             channel=context.channel_id,
+        #             ts=wip_reply["message"]["ts"],
+        #         )
+        #         return
+        #
+        #     consume_openai_stream_to_write_reply(
+        #         client=client,
+        #         wip_reply=wip_reply,
+        #         context=context,
+        #         user_id=user_id,
+        #         messages=messages,
+        #         stream=stream,
+        #         timeout_seconds=OPENAI_TIMEOUT_SECONDS,
+        #         translate_markdown=TRANSLATE_MARKDOWN,
+        #     )
 
     except Timeout:
         if wip_reply is not None:
