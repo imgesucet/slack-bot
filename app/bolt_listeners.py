@@ -69,6 +69,16 @@ def extract_postgres_url(sentence):
     else:
         return None
 
+def extract_table(sentence):
+    url_pattern = re.compile(
+        r'table:\/\/[^\s\/$.?#].[^\s]*$', re.IGNORECASE)
+
+    match = re.search(url_pattern, sentence)
+    if match:
+        return match.group(0)
+    else:
+        return None
+
 def respond_to_app_mention(
     context: BoltContext,
     payload: dict,
@@ -383,7 +393,7 @@ def respond_to_new_message(
         # )
 
         API_KEY = os.environ.get("API_KEY", "123456wer12wegfqwtg24t2462f")
-        url = "https://genieapi.defytrends.dev/language_to_sql"
+        url = "https://genieapi.defytrends.dev/api/language_to_sql"
         headers = {
             "X-API-Key": API_KEY
         }
