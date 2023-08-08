@@ -26,7 +26,7 @@ from app.slack_ops import (
     find_parent_message,
     is_no_mention_thread,
     post_wip_message,
-    update_wip_message,
+    update_wip_message, post_wip_message_with_attachment,
 )
 
 from app.utils import redact_string
@@ -399,18 +399,18 @@ def respond_to_new_message(
         }
         params = {
             "text_query": last_message["text"],
-            "table_name": "news_newsarticle",
+            "table_name": "tvl",
             "execute_sql": True
         }
 
         response = requests.get(url, headers=headers, params=params)
         loading_text = response.json()
 
-        wip_reply = post_wip_message(
+        wip_reply = post_wip_message_with_attachment(
             client=client,
             channel=context.channel_id,
             thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            loading_text=str(loading_text),
+            loading_text=loading_text,
             messages=messages,
             user=user_id,
         )

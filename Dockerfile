@@ -4,12 +4,23 @@ WORKDIR /build/
 RUN pip install -U pip && pip install -r requirements.txt
 
 FROM python:3.11.3-slim-buster as app
+
+RUN addgroup --system django \
+    && adduser --system --ingroup django django
+
 WORKDIR /app/
-COPY *.py /app/
+RUN chown django:django /app/
+COPY --chown=django:django *.py /app/
+
 RUN mkdir /app/app/
-COPY app/*.py /app/app/
-COPY --from=builder /usr/local/bin/ /usr/local/bin/
-COPY --from=builder /usr/local/lib/ /usr/local/lib/
+RUN chown django:django /app/app/
+
+COPY --chown=django:django app/*.py /app/app/
+COPY --chown=django:django --from=builder /usr/local/bin/ /usr/local/bin/
+COPY --chown=django:django --from=builder /usr/local/lib/ /usr/local/lib/
+
+USER django
+
 ENTRYPOINT python main.py
 
 # docker build . -t your-repo/chat-gpt-in-slack

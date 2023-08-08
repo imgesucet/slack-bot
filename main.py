@@ -103,5 +103,126 @@ if __name__ == "__main__":
         context["OPENAI_DEPLOYMENT_ID"] = OPENAI_DEPLOYMENT_ID
         next_()
 
+
+
+    @app.command("/set_db_table")
+    def handle_configure_command_set_db_table(ack, body, command, respond):
+        # Acknowledge command request
+        ack()
+
+        value = command['text']
+        print(f"set_db_table!!!, value={value}")
+
+        if value:
+            respond(text=f"DB Table set to: {value}")  # Respond to the command
+        else:
+            respond(text="You must provide the DB Table after /set_db_table")
+    @app.command("/set_db_url")
+    def handle_configure_command_set_db_url(ack, body, command, respond):
+        # Acknowledge command request
+        ack()
+
+        value = command['text']
+        print(f"set_db_url!!!, value={value}")
+
+        if value:
+            respond(text=f"DB URL set to: {value}")  # Respond to the command
+        else:
+            respond(text="You must provide the DB URL after /set_db_url")
+
+    @app.command("/set_db_type")
+    def handle_configure_comman_set_db_type(ack, body, command, respond):
+        # Acknowledge command request
+        ack()
+
+        value = command['text']
+        print(f"set_db_type!!!, value={value}")
+
+        if value:
+            respond(text=f"DB type set to: {value}")  # Respond to the command
+        else:
+            respond(text="You must provide the DB Type after /set_db_type")
+
+    @app.command("/set_key")
+    def handle_configure_command_set_key(ack, body, command, respond):
+        # Acknowledge command request
+        ack()
+
+        api_key = command['text']
+        print(f"set_key!!!, api_key={api_key}")
+
+        if api_key:
+            respond(text=f"API Key set to: {api_key}")  # Respond to the command
+        else:
+            respond(text="You must provide an API key after /set_key")
+
+
+    @app.action("configure")
+    def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext):
+        print("configure!!!")
+        ack()
+        already_set_api_key = context.get("OPENAI_API_KEY")
+        api_key_text = "Save your OpenAI API key:"
+        submit = "Submit"
+        cancel = "Cancel"
+        if already_set_api_key is not None:
+            api_key_text = translate(
+                openai_api_key=already_set_api_key, context=context, text=api_key_text
+            )
+            submit = translate(
+                openai_api_key=already_set_api_key, context=context, text=submit
+            )
+            cancel = translate(
+                openai_api_key=already_set_api_key, context=context, text=cancel
+            )
+
+        client.views_open(
+            trigger_id=body["trigger_id"],
+            view={
+                "type": "modal",
+                "callback_id": "configure",
+                "title": {"type": "plain_text", "text": "OpenAI API Key"},
+                "submit": {"type": "plain_text", "text": submit},
+                "close": {"type": "plain_text", "text": cancel},
+                "blocks": [
+                    {
+                        "type": "input",
+                        "block_id": "api_key",
+                        "label": {"type": "plain_text", "text": api_key_text},
+                        "element": {"type": "plain_text_input", "action_id": "input"},
+                    },
+                    {
+                        "type": "input",
+                        "block_id": "model",
+                        "label": {"type": "plain_text", "text": "OpenAI Model"},
+                        "element": {
+                            "type": "static_select",
+                            "action_id": "input",
+                            "options": [
+                                {
+                                    "text": {
+                                        "type": "plain_text",
+                                        "text": "GPT-3.5 Turbo",
+                                    },
+                                    "value": "gpt-3.5-turbo",
+                                },
+                                {
+                                    "text": {"type": "plain_text", "text": "GPT-4"},
+                                    "value": "gpt-4",
+                                },
+                            ],
+                            "initial_option": {
+                                "text": {
+                                    "type": "plain_text",
+                                    "text": "GPT-3.5 Turbo",
+                                },
+                                "value": "gpt-3.5-turbo",
+                            },
+                        },
+                    },
+                ],
+            },
+        )
+
     handler = SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
     handler.start()
