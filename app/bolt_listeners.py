@@ -399,7 +399,7 @@ def respond_to_new_message(
         }
         params = {
             "text_query": last_message["text"],
-            "table_name": "tvl",
+            "table_name": "demo_flights_routes",
             "execute_sql": True
         }
 
