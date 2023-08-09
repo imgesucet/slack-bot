@@ -29,7 +29,8 @@ from app.slack_ops import (
     update_wip_message, post_wip_message_with_attachment,
 )
 
-from app.utils import redact_string
+from app.utils import redact_string, fetch_data_from_genieapi
+
 
 #
 # Listener functions
@@ -388,23 +389,10 @@ def respond_to_new_message(
                 }
             )
 
-        # loading_text = translate(
-        #     openai_api_key=openai_api_key, context=context, text=DEFAULT_LOADING_TEXT
-        # )
+        api_key = None
+        table_name = context.get("db_table")
 
-        API_KEY = os.environ.get("API_KEY", "123456wer12wegfqwtg24t2462f")
-        url = "https://genieapi.defytrends.dev/api/language_to_sql"
-        headers = {
-            "X-API-Key": API_KEY
-        }
-        params = {
-            "text_query": last_message["text"],
-            "table_name": "demo_flights_routes",
-            "execute_sql": True
-        }
-
-        response = requests.get(url, headers=headers, params=params)
-        loading_text = response.json()
+        loading_text = fetch_data_from_genieapi(api_key, None, last_message["text"], table_name)
 
         wip_reply = post_wip_message_with_attachment(
             client=client,

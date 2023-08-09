@@ -1,7 +1,10 @@
+import json
 import logging
 import os
 from flask import Flask, jsonify
 import threading
+import boto3
+import botocore
 
 from slack_bolt import App, BoltContext
 from slack_sdk.web import WebClient
@@ -16,7 +19,8 @@ from app.env import (
     OPENAI_API_TYPE,
     OPENAI_API_BASE,
     OPENAI_API_VERSION,
-    OPENAI_DEPLOYMENT_ID,
+    OPENAI_DEPLOYMENT_ID, DEFAULT_OPENAI_TEMPERATURE, DEFAULT_OPENAI_MODEL, DEFAULT_OPENAI_API_TYPE,
+    DEFAULT_OPENAI_API_BASE, DEFAULT_OPENAI_API_VERSION, DEFAULT_OPENAI_DEPLOYMENT_ID,
 )
 from app.slack_ops import (
     build_home_tab,
@@ -30,7 +34,21 @@ if __name__ == "__main__":
 
     # Create a Flask application
     healthcheck_app = Flask(__name__)
+    AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
+    AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
+    AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
+    AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "fr-par")
+    AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
+    AWS_S3_FILE_OVERWRITE = os.environ.get("AWS_S3_FILE_OVERWRITE", False)
 
+    s3_client = boto3.client(
+        's3',
+        aws_access_key_id=AWS_ACCESS_KEY_ID,
+        aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
+        endpoint_url=AWS_S3_ENDPOINT_URL,
+        region_name=AWS_S3_REGION_NAME,
+        verify=False  # Consider this only if you have SSL issues, but be aware of the security implications
+    )
 
     # Define a simple healthcheck endpoint
     @healthcheck_app.route("/healthcheck", methods=['GET'])
@@ -92,21 +110,53 @@ if __name__ == "__main__":
             context["locale"] = user_info.get("user", {}).get("locale")
             next_()
 
+    # @app.middleware
+    # def set_openai_api_key(context: BoltContext, next_):
+    #     context["OPENAI_API_KEY"] = os.environ["OPENAI_API_KEY"]
+    #     context["OPENAI_MODEL"] = OPENAI_MODEL
+    #     context["OPENAI_TEMPERATURE"] = OPENAI_TEMPERATURE
+    #     context["OPENAI_API_TYPE"] = OPENAI_API_TYPE
+    #     context["OPENAI_API_BASE"] = OPENAI_API_BASE
+    #     context["OPENAI_API_VERSION"] = OPENAI_API_VERSION
+    #     context["OPENAI_DEPLOYMENT_ID"] = OPENAI_DEPLOYMENT_ID
+    #     next_()
+
     @app.middleware
-    def set_openai_api_key(context: BoltContext, next_):
-        context["OPENAI_API_KEY"] = os.environ["OPENAI_API_KEY"]
-        context["OPENAI_MODEL"] = OPENAI_MODEL
-        context["OPENAI_TEMPERATURE"] = OPENAI_TEMPERATURE
-        context["OPENAI_API_TYPE"] = OPENAI_API_TYPE
-        context["OPENAI_API_BASE"] = OPENAI_API_BASE
-        context["OPENAI_API_VERSION"] = OPENAI_API_VERSION
-        context["OPENAI_DEPLOYMENT_ID"] = OPENAI_DEPLOYMENT_ID
+    def set_s3_openai_api_key(context: BoltContext, next_):
+        try:
+            s3_response = s3_client.get_object(
+                Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id
+            )
+            config_str: str = s3_response["Body"].read().decode("utf-8")
+            if config_str.startswith("{"):
+                config = json.loads(config_str)
+                context["OPENAI_API_KEY"] = config.get("api_key")
+
+                context["db_type"] = config.get("db_type")
+                context["db_url"] = config.get("db_url")
+                context["db_table"] = config.get("db_table")
+
+
+                context["OPENAI_MODEL"] = config.get("model")
+                context["OPENAI_TEMPERATURE"] = config.get(
+                    "temperature", DEFAULT_OPENAI_TEMPERATURE
+                )
+            else:
+                # The legacy data format
+                context["OPENAI_API_KEY"] = config_str
+                context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
+                context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
+            context["OPENAI_API_TYPE"] = DEFAULT_OPENAI_API_TYPE
+            context["OPENAI_API_BASE"] = DEFAULT_OPENAI_API_BASE
+            context["OPENAI_API_VERSION"] = DEFAULT_OPENAI_API_VERSION
+            context["OPENAI_DEPLOYMENT_ID"] = DEFAULT_OPENAI_DEPLOYMENT_ID
+        except:  # noqa: E722
+            context["OPENAI_API_KEY"] = None
         next_()
 
 
-
     @app.command("/set_db_table")
-    def handle_configure_command_set_db_table(ack, body, command, respond):
+    def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
         # Acknowledge command request
         ack()
 
@@ -114,11 +164,14 @@ if __name__ == "__main__":
         print(f"set_db_table!!!, value={value}")
 
         if value:
+            save_s3("db_table", value, logger, context)
             respond(text=f"DB Table set to: {value}")  # Respond to the command
         else:
             respond(text="You must provide the DB Table after /set_db_table")
+
+
     @app.command("/set_db_url")
-    def handle_configure_command_set_db_url(ack, body, command, respond):
+    def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
         # Acknowledge command request
         ack()
 
@@ -126,12 +179,13 @@ if __name__ == "__main__":
         print(f"set_db_url!!!, value={value}")
 
         if value:
+            save_s3("db_url", value, logger, context)
             respond(text=f"DB URL set to: {value}")  # Respond to the command
         else:
             respond(text="You must provide the DB URL after /set_db_url")
 
     @app.command("/set_db_type")
-    def handle_configure_comman_set_db_type(ack, body, command, respond):
+    def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
         # Acknowledge command request
         ack()
 
@@ -139,12 +193,13 @@ if __name__ == "__main__":
         print(f"set_db_type!!!, value={value}")
 
         if value:
+            save_s3("db_type", value, logger, context)
             respond(text=f"DB type set to: {value}")  # Respond to the command
         else:
             respond(text="You must provide the DB Type after /set_db_type")
 
     @app.command("/set_key")
-    def handle_configure_command_set_key(ack, body, command, respond):
+    def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
         # Acknowledge command request
         ack()
 
@@ -152,6 +207,7 @@ if __name__ == "__main__":
         print(f"set_key!!!, api_key={api_key}")
 
         if api_key:
+            save_s3("api_key", api_key, logger, context)
             respond(text=f"API Key set to: {api_key}")  # Respond to the command
         else:
             respond(text="You must provide an API key after /set_key")
@@ -223,6 +279,41 @@ if __name__ == "__main__":
                 ],
             },
         )
+
+    def save_s3(
+            key: str,
+            value: str,
+            logger: logging.Logger,
+            context: BoltContext,
+    ):
+        try:
+            # Step 1: Try to get the existing object from S3
+            try:
+                response = s3_client.get_object(
+                    Bucket=AWS_STORAGE_BUCKET_NAME,
+                    Key=context.team_id
+                )
+                body = response['Body'].read().decode('utf-8')
+                data = json.loads(body)
+            except s3_client.exceptions.NoSuchKey:
+                # If the object doesn't exist, create a new one
+                data = {}
+
+            # Step 2: Update or set the key and value in the object
+            data[key] = value
+
+            # Step 3: Put the updated or new object back into S3
+            s3_client.put_object(
+                Bucket=AWS_STORAGE_BUCKET_NAME,
+                Key=context.team_id,
+                Body=json.dumps(data)
+            )
+        except botocore.exceptions.ClientError as e:
+            # Specific exception handling for boto3's client errors
+            logger.error(f"save_s3, Encountered an error with boto3: {e}")
+        except Exception as e:
+            logger.exception(e)
+
 
     handler = SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
     handler.start()
