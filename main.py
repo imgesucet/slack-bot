@@ -110,16 +110,6 @@ if __name__ == "__main__":
             context["locale"] = user_info.get("user", {}).get("locale")
             next_()
 
-    # @app.middleware
-    # def set_openai_api_key(context: BoltContext, next_):
-    #     context["OPENAI_API_KEY"] = os.environ["OPENAI_API_KEY"]
-    #     context["OPENAI_MODEL"] = OPENAI_MODEL
-    #     context["OPENAI_TEMPERATURE"] = OPENAI_TEMPERATURE
-    #     context["OPENAI_API_TYPE"] = OPENAI_API_TYPE
-    #     context["OPENAI_API_BASE"] = OPENAI_API_BASE
-    #     context["OPENAI_API_VERSION"] = OPENAI_API_VERSION
-    #     context["OPENAI_DEPLOYMENT_ID"] = OPENAI_DEPLOYMENT_ID
-    #     next_()
 
     @app.middleware
     def set_s3_openai_api_key(context: BoltContext, next_):
@@ -132,10 +122,10 @@ if __name__ == "__main__":
                 config = json.loads(config_str)
                 context["OPENAI_API_KEY"] = config.get("api_key")
 
+                context["api_key"] = config.get("api_key")
                 context["db_type"] = config.get("db_type")
                 context["db_url"] = config.get("db_url")
                 context["db_table"] = config.get("db_table")
-
 
                 context["OPENAI_MODEL"] = config.get("model")
                 context["OPENAI_TEMPERATURE"] = config.get(
@@ -167,7 +157,7 @@ if __name__ == "__main__":
             save_s3("db_table", value, logger, context)
             respond(text=f"DB Table set to: {value}")  # Respond to the command
         else:
-            respond(text="You must provide the DB Table after /set_db_table")
+            respond(text="You must provide the DB Table after. eg /set_db_table tvl")
 
 
     @app.command("/set_db_url")
@@ -182,7 +172,7 @@ if __name__ == "__main__":
             save_s3("db_url", value, logger, context)
             respond(text=f"DB URL set to: {value}")  # Respond to the command
         else:
-            respond(text="You must provide the DB URL after /set_db_url")
+            respond(text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
 
     @app.command("/set_db_type")
     def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
@@ -196,7 +186,7 @@ if __name__ == "__main__":
             save_s3("db_type", value, logger, context)
             respond(text=f"DB type set to: {value}")  # Respond to the command
         else:
-            respond(text="You must provide the DB Type after /set_db_type")
+            respond(text="You must provide the DB Type after /set_db_type POSTGRES")
 
     @app.command("/set_key")
     def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
@@ -210,7 +200,7 @@ if __name__ == "__main__":
             save_s3("api_key", api_key, logger, context)
             respond(text=f"API Key set to: {api_key}")  # Respond to the command
         else:
-            respond(text="You must provide an API key after /set_key")
+            respond(text="You must provide an API key after /set_key asd123")
 
 
     @app.action("configure")
@@ -286,12 +276,14 @@ if __name__ == "__main__":
             logger: logging.Logger,
             context: BoltContext,
     ):
+        user_id = context.actor_user_id or context.user_id
+
         try:
             # Step 1: Try to get the existing object from S3
             try:
                 response = s3_client.get_object(
                     Bucket=AWS_STORAGE_BUCKET_NAME,
-                    Key=context.team_id
+                    Key=context.team_id+"_"+user_id
                 )
                 body = response['Body'].read().decode('utf-8')
                 data = json.loads(body)
@@ -305,7 +297,7 @@ if __name__ == "__main__":
             # Step 3: Put the updated or new object back into S3
             s3_client.put_object(
                 Bucket=AWS_STORAGE_BUCKET_NAME,
-                Key=context.team_id,
+                Key=context.team_id+"_"+user_id,
                 Body=json.dumps(data)
             )
         except botocore.exceptions.ClientError as e:
