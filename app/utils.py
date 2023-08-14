@@ -39,7 +39,7 @@ def redact_string(input_string: str) -> str:
 
 def fetch_data_from_genieapi(api_key=None, endpoint_url=None, text_query=None, table_name=None):
     # Set defaults
-    API_KEY_DEFAULT = os.environ.get("API_KEY", "123456wer12wegfqwtg24t2462f")
+    API_KEY_DEFAULT = os.environ.get("API_KEY", "")
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev")
     ENDPOINT = "/api/language_to_sql"
 
@@ -67,6 +67,53 @@ def fetch_data_from_genieapi(api_key=None, endpoint_url=None, text_query=None, t
         # If status code is below 299, return the JSON response
         if response.status_code < 299:
             return response.json()
+
+        # If status code is between 400 (inclusive) and 500 (exclusive), raise an exception and stop
+        elif 400 <= response.status_code < 500:
+            response.raise_for_status()
+
+        # If status code is 500 or above, retry the request
+        elif response.status_code >= 500:
+            retries += 1
+            time.sleep(DELAY_FACTOR ** retries)  # exponential backoff
+        else:
+            break
+
+    # If maximum retries are reached, raise an exception
+    raise Exception("Max retries reached without a successful response")
+
+
+
+
+def post_data_to_genieapi(api_key=None, endpoint=None, params=None, post_body=None):
+    # Set defaults
+    API_KEY_DEFAULT = os.environ.get("API_KEY", "")
+    URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev")
+
+
+    # PARAMS_DEFAULT = {
+    #     "text_query": text_query,
+    #     "table_name": table_name,
+    #     "execute_sql": True
+    # }
+
+    # Use arguments if provided, otherwise default
+    api_key = api_key if api_key is not None else API_KEY_DEFAULT
+
+    endpoint_url = URL_DEFAULT + endpoint
+    headers = {"X-API-Key": api_key}
+
+    # Define max retries and delay for exponential backoff
+    MAX_RETRIES = 3
+    DELAY_FACTOR = 2
+
+    retries = 0
+    while retries < MAX_RETRIES:
+        response = requests.post(endpoint_url, headers=headers, params=params, json=post_body)
+
+        # If status code is below 299, return the JSON response
+        if response.status_code < 299:
+            return response.status_code
 
         # If status code is between 400 (inclusive) and 500 (exclusive), raise an exception and stop
         elif 400 <= response.status_code < 500:

@@ -28,7 +28,7 @@ from app.slack_ops import (
     DEFAULT_HOME_TAB_CONFIGURE_LABEL,
 )
 from app.i18n import translate
-
+from app.utils import post_data_to_genieapi, redact_string
 
 if __name__ == "__main__":
 
@@ -146,7 +146,7 @@ if __name__ == "__main__":
 
 
     @app.command("/set_db_table")
-    def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
+    def handle_set_db_table(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
         # Acknowledge command request
         ack()
 
@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
 
     @app.command("/set_db_url")
-    def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
+    def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
         # Acknowledge command request
         ack()
 
@@ -169,13 +169,20 @@ if __name__ == "__main__":
         print(f"set_db_url!!!, value={value}")
 
         if value:
-            save_s3("db_url", value, logger, context)
-            respond(text=f"DB URL set to: {value}")  # Respond to the command
+            # save_s3("db_url", value, logger, context)
+            api_key = context["api_key"]
+            try:
+                post_data_to_genieapi(api_key, "/update/user/database_connection", None, {"connection_string_url": value})
+            except Exception as e:
+                logger.exception(e)
+                return respond(text=f"Failed to set DB URL to: {redact_string(value)}")  # Respond to the command
+
+            respond(text=f"DB URL set to: {redact_string(value)}")  # Respond to the command
         else:
             respond(text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
 
     @app.command("/set_db_type")
-    def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
+    def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
         # Acknowledge command request
         ack()
 
@@ -189,7 +196,7 @@ if __name__ == "__main__":
             respond(text="You must provide the DB Type after /set_db_type POSTGRES")
 
     @app.command("/set_key")
-    def handle_configure_command_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
+    def handle_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
         # Acknowledge command request
         ack()
 
