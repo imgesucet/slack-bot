@@ -1,45 +1,56 @@
 display_information:
-  name: ChatGPT
-  description: Interact with ChatGPT in Slack!
-  background_color: "#195208"
+  name: SQLGenerator (prod)
+  description: Prod app
+  background_color: "#323336"
 features:
   app_home:
-    home_tab_enabled: true
+    home_tab_enabled: false
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   bot_user:
-    display_name: ChatGPT Bot
+    display_name: Genie Bot (prod)
     always_online: true
+  slash_commands:
+    - command: /set_key
+      description: Set your API KEY
+      usage_hint: "[API_KEY_HERE]"
+      should_escape: false
+    - command: /set_db_type
+      description: Set your DB type
+      usage_hint: "[POSTGRES]"
+      should_escape: false
+    - command: /set_db_url
+      description: Set your DB Connection String URL
+      usage_hint: "[postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]"
+      should_escape: false
+    - command: /set_db_table
+      description: Set your DB Table
+      usage_hint: "[tvl]"
+      should_escape: false
 oauth_config:
-  redirect_urls:
-    - https://gptinslack.defytrends.dev/slack/oauth_redirect
   scopes:
     bot:
       - app_mentions:read
       - channels:history
+      - chat:write
+      - chat:write.public
+      - commands
+      - files:write
       - groups:history
       - im:history
       - mpim:history
-      - chat:write.public
-      - chat:write
       - users:read
       - files:read
-      - files:write
 settings:
   event_subscriptions:
-    request_url: https://gptinslack.defytrends.dev/slack/events
     bot_events:
-      - app_home_opened
       - app_mention
-      - app_uninstalled
       - message.channels
       - message.groups
       - message.im
       - message.mpim
-      - tokens_revoked
   interactivity:
     is_enabled: true
-    request_url: https://gptinslack.defytrends.dev/slack/events
   org_deploy_enabled: false
-  socket_mode_enabled: false
+  socket_mode_enabled: true
   token_rotation_enabled: false

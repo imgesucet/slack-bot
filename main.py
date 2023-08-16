@@ -14,12 +14,7 @@ from app.bolt_listeners import before_authorize, register_listeners
 from app.env import (
     USE_SLACK_LANGUAGE,
     SLACK_APP_LOG_LEVEL,
-    OPENAI_MODEL,
-    OPENAI_TEMPERATURE,
-    OPENAI_API_TYPE,
-    OPENAI_API_BASE,
-    OPENAI_API_VERSION,
-    OPENAI_DEPLOYMENT_ID, DEFAULT_OPENAI_TEMPERATURE, DEFAULT_OPENAI_MODEL, DEFAULT_OPENAI_API_TYPE,
+    DEFAULT_OPENAI_TEMPERATURE, DEFAULT_OPENAI_MODEL, DEFAULT_OPENAI_API_TYPE,
     DEFAULT_OPENAI_API_BASE, DEFAULT_OPENAI_API_VERSION, DEFAULT_OPENAI_DEPLOYMENT_ID,
 )
 from app.slack_ops import (
@@ -28,7 +23,7 @@ from app.slack_ops import (
     DEFAULT_HOME_TAB_CONFIGURE_LABEL,
 )
 from app.i18n import translate
-from app.utils import post_data_to_genieapi, redact_string
+from app.utils import post_data_to_genieapi, redact_string, cool_name_generator
 
 if __name__ == "__main__":
 
@@ -40,6 +35,8 @@ if __name__ == "__main__":
     AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "fr-par")
     AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
     AWS_S3_FILE_OVERWRITE = os.environ.get("AWS_S3_FILE_OVERWRITE", False)
+    SLACK_APP_TOKEN = os.environ["SLACK_APP_TOKEN"]
+    SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 
     s3_client = boto3.client(
         's3',
@@ -71,11 +68,11 @@ if __name__ == "__main__":
     logging.basicConfig(level=SLACK_APP_LOG_LEVEL)
 
     app = App(
-        token=os.environ["SLACK_BOT_TOKEN"],
+        token=SLACK_BOT_TOKEN,
         before_authorize=before_authorize,
         process_before_response=True,
     )
-    app.client.retry_handlers.append(RateLimitErrorRetryHandler(max_retry_count=2))
+    # app.client.retry_handlers.append(RateLimitErrorRetryHandler(max_retry_count=2))
 
     register_listeners(app)
 
@@ -172,7 +169,8 @@ if __name__ == "__main__":
             # save_s3("db_url", value, logger, context)
             api_key = context["api_key"]
             try:
-                post_data_to_genieapi(api_key, "/update/user/database_connection", None, {"connection_string_url": value})
+                resource_name = cool_name_generator(value)
+                post_data_to_genieapi(api_key, "/update/user/database_connection", None, {"connection_string_url": value, "resourcename": resource_name})
             except Exception as e:
                 logger.exception(e)
                 return respond(text=f"Failed to set DB URL to: {redact_string(value)}")  # Respond to the command
@@ -209,73 +207,6 @@ if __name__ == "__main__":
         else:
             respond(text="You must provide an API key after /set_key asd123")
 
-
-    @app.action("configure")
-    def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext):
-        print("configure!!!")
-        ack()
-        already_set_api_key = context.get("OPENAI_API_KEY")
-        api_key_text = "Save your OpenAI API key:"
-        submit = "Submit"
-        cancel = "Cancel"
-        if already_set_api_key is not None:
-            api_key_text = translate(
-                openai_api_key=already_set_api_key, context=context, text=api_key_text
-            )
-            submit = translate(
-                openai_api_key=already_set_api_key, context=context, text=submit
-            )
-            cancel = translate(
-                openai_api_key=already_set_api_key, context=context, text=cancel
-            )
-
-        client.views_open(
-            trigger_id=body["trigger_id"],
-            view={
-                "type": "modal",
-                "callback_id": "configure",
-                "title": {"type": "plain_text", "text": "OpenAI API Key"},
-                "submit": {"type": "plain_text", "text": submit},
-                "close": {"type": "plain_text", "text": cancel},
-                "blocks": [
-                    {
-                        "type": "input",
-                        "block_id": "api_key",
-                        "label": {"type": "plain_text", "text": api_key_text},
-                        "element": {"type": "plain_text_input", "action_id": "input"},
-                    },
-                    {
-                        "type": "input",
-                        "block_id": "model",
-                        "label": {"type": "plain_text", "text": "OpenAI Model"},
-                        "element": {
-                            "type": "static_select",
-                            "action_id": "input",
-                            "options": [
-                                {
-                                    "text": {
-                                        "type": "plain_text",
-                                        "text": "GPT-3.5 Turbo",
-                                    },
-                                    "value": "gpt-3.5-turbo",
-                                },
-                                {
-                                    "text": {"type": "plain_text", "text": "GPT-4"},
-                                    "value": "gpt-4",
-                                },
-                            ],
-                            "initial_option": {
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": "GPT-3.5 Turbo",
-                                },
-                                "value": "gpt-3.5-turbo",
-                            },
-                        },
-                    },
-                ],
-            },
-        )
 
     def save_s3(
             key: str,
@@ -314,5 +245,5 @@ if __name__ == "__main__":
             logger.exception(e)
 
 
-    handler = SocketModeHandler(app, os.environ["SLACK_APP_TOKEN"])
+    handler = SocketModeHandler(app, SLACK_APP_TOKEN)
     handler.start()

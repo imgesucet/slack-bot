@@ -1,3 +1,4 @@
+import hashlib
 import os
 import re
 import time
@@ -128,3 +129,23 @@ def post_data_to_genieapi(api_key=None, endpoint=None, params=None, post_body=No
 
     # If maximum retries are reached, raise an exception
     raise Exception("Max retries reached without a successful response")
+
+
+
+# Word lists, for the sake of this example we're using simple lists
+# but you can expand them or use some cool/adjective word lists
+ADJECTIVES = ["mystic", "silent", "bold", "ancient", "bright", "daring", "brave"]
+NOUNS = ["river", "mountain", "forest", "sky", "ocean", "star", "cloud"]
+
+def cool_name_generator(input_string):
+    # Create an MD5 hash of the input
+    hashed = hashlib.md5(input_string.encode()).hexdigest()
+
+    # Convert some characters of the hash into integers for indexing
+    adj_index = int(hashed[:2], 16) % len(ADJECTIVES)   # taking the first 2 characters
+    noun_index = int(hashed[2:4], 16) % len(NOUNS)     # taking the next 2 characters
+
+    # Use the indices to pick words from the lists
+    name = f"{ADJECTIVES[adj_index]}-{NOUNS[noun_index]}"
+    return name
+
