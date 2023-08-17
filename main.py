@@ -23,7 +23,8 @@ from app.slack_ops import (
     DEFAULT_HOME_TAB_CONFIGURE_LABEL,
 )
 from app.i18n import translate
-from app.utils import post_data_to_genieapi, redact_string, cool_name_generator
+from app.utils import post_data_to_genieapi, redact_string, cool_name_generator, fetch_data_from_genieapi, \
+    redact_credentials_from_url
 
 if __name__ == "__main__":
 
@@ -46,6 +47,7 @@ if __name__ == "__main__":
         region_name=AWS_S3_REGION_NAME,
         verify=False  # Consider this only if you have SSL issues, but be aware of the security implications
     )
+
 
     # Define a simple healthcheck endpoint
     @healthcheck_app.route("/healthcheck", methods=['GET'])
@@ -76,6 +78,7 @@ if __name__ == "__main__":
 
     register_listeners(app)
 
+
     @app.event("app_home_opened")
     def render_home_tab(client: WebClient, context: BoltContext):
         already_set_api_key = os.environ["OPENAI_API_KEY"]
@@ -94,13 +97,13 @@ if __name__ == "__main__":
             view=build_home_tab(text, configure_label),
         )
 
-    if USE_SLACK_LANGUAGE is True:
 
+    if USE_SLACK_LANGUAGE is True:
         @app.middleware
         def set_locale(
-            context: BoltContext,
-            client: WebClient,
-            next_,
+                context: BoltContext,
+                client: WebClient,
+                next_,
         ):
             user_id = context.actor_user_id or context.user_id
             user_info = client.users_info(user=user_id, include_locale=True)
@@ -120,14 +123,21 @@ if __name__ == "__main__":
                 context["OPENAI_API_KEY"] = config.get("api_key")
 
                 context["api_key"] = config.get("api_key")
-                context["db_type"] = config.get("db_type")
-                context["db_url"] = config.get("db_url")
-                context["db_table"] = config.get("db_table")
-
                 context["OPENAI_MODEL"] = config.get("model")
                 context["OPENAI_TEMPERATURE"] = config.get(
                     "temperature", DEFAULT_OPENAI_TEMPERATURE
                 )
+            user_id = context.actor_user_id or context.user_id
+            s3_response = s3_client.get_object(
+                Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id + "_" + user_id
+            )
+            config_str: str = s3_response["Body"].read().decode("utf-8")
+            if config_str.startswith("{"):
+                config = json.loads(config_str)
+                context["db_type"] = config.get("db_type")
+                context["db_url"] = config.get("db_url")
+                context["db_table"] = config.get("db_table")
+
             else:
                 # The legacy data format
                 context["OPENAI_API_KEY"] = config_str
@@ -143,7 +153,7 @@ if __name__ == "__main__":
 
 
     @app.command("/set_db_table")
-    def handle_set_db_table(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
+    def handle_set_db_table(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
 
@@ -158,7 +168,7 @@ if __name__ == "__main__":
 
 
     @app.command("/set_db_url")
-    def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
+    def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
 
@@ -170,17 +180,50 @@ if __name__ == "__main__":
             api_key = context["api_key"]
             try:
                 resource_name = cool_name_generator(value)
-                post_data_to_genieapi(api_key, "/update/user/database_connection", None, {"connection_string_url": value, "resourcename": resource_name})
+                post_data_to_genieapi(api_key, "/update/user/database_connection", None,
+                                      {"connection_string_url": value, "resourcename": resource_name})
+
+                save_s3("db_url", resource_name, logger, context)
+                respond(text=f"DB URL set to: {redact_string(value)}")  # Respond to the command
+
             except Exception as e:
                 logger.exception(e)
-                return respond(text=f"Failed to set DB URL to: {redact_string(value)}")  # Respond to the command
-
-            respond(text=f"DB URL set to: {redact_string(value)}")  # Respond to the command
+                respond(text=f"Failed to set DB URL to: {redact_string(value)}")  # Respond to the command
+                return
         else:
-            respond(text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
+            respond(
+                text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
+
+    @app.command("/get_db_urls")
+    def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+        # Acknowledge command request
+        ack()
+
+        print(f"get_db_urls!!!")
+
+        api_key = context["api_key"]
+        try:
+            connections = fetch_data_from_genieapi(api_key, "/list/user/database_connection")
+
+            # Create headers for the table
+            table_header = "*Resource Name* | *Connection String URL*\n"
+            strResponse = table_header
+            separator = "---------------- | ----------------------\n"  # You can adjust the dashes as per the expected length
+            strResponse += separator
+
+            # Add each connection to the table
+            for c in connections:
+                print(f"get_db_urls, connections, c={c} ")
+                strResponse += f"{c['resourcename']} | {redact_credentials_from_url(c['connection_string_url'])}\n"
+
+            respond(text=strResponse)
+
+        except Exception as e:
+            logger.exception(e)
+            return respond(text=f"Failed to get DB URLs")  # Respond to the command
 
     @app.command("/set_db_type")
-    def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
+    def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
 
@@ -193,8 +236,9 @@ if __name__ == "__main__":
         else:
             respond(text="You must provide the DB Type after /set_db_type POSTGRES")
 
+
     @app.command("/set_key")
-    def handle_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger,):
+    def handle_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
 
@@ -215,13 +259,17 @@ if __name__ == "__main__":
             context: BoltContext,
     ):
         user_id = context.actor_user_id or context.user_id
+        if key == "db_table" or key == "db_url" or key == "db_type":
+            bucket_key = context.team_id + "_" + user_id
+        else:
+            bucket_key = context.team_id
 
         try:
             # Step 1: Try to get the existing object from S3
             try:
                 response = s3_client.get_object(
                     Bucket=AWS_STORAGE_BUCKET_NAME,
-                    Key=context.team_id+"_"+user_id
+                    Key=bucket_key
                 )
                 body = response['Body'].read().decode('utf-8')
                 data = json.loads(body)
@@ -235,15 +283,17 @@ if __name__ == "__main__":
             # Step 3: Put the updated or new object back into S3
             s3_client.put_object(
                 Bucket=AWS_STORAGE_BUCKET_NAME,
-                Key=context.team_id+"_"+user_id,
+                Key=context.team_id + "_" + user_id,
                 Body=json.dumps(data)
             )
+            return
         except botocore.exceptions.ClientError as e:
             # Specific exception handling for boto3's client errors
-            logger.error(f"save_s3, Encountered an error with boto3: {e}")
+            logger.error(f"save_s3, Encountered an error ClientError, with boto3: {e}")
+            return
         except Exception as e:
-            logger.exception(e)
-
+            logger.error(f"save_s3, Encountered an error Exception, with boto3: {e}")
+            return
 
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
     handler.start()

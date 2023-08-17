@@ -3,6 +3,7 @@ import os
 import re
 import time
 
+from urllib.parse import urlparse, urlunparse
 from app.env import (
     REDACT_EMAIL_PATTERN,
     REDACT_PHONE_PATTERN,
@@ -38,11 +39,11 @@ def redact_string(input_string: str) -> str:
 
 
 
-def fetch_data_from_genieapi(api_key=None, endpoint_url=None, text_query=None, table_name=None):
+def fetch_data_from_genieapi(api_key=None, endpoint="/language_to_sql", text_query=None, table_name=None, db_url=None):
     # Set defaults
     API_KEY_DEFAULT = os.environ.get("API_KEY", "")
-    URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev")
-    ENDPOINT = "/api/language_to_sql"
+    URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
+
 
     PARAMS_DEFAULT = {
         "text_query": text_query,
@@ -52,9 +53,12 @@ def fetch_data_from_genieapi(api_key=None, endpoint_url=None, text_query=None, t
 
     # Use arguments if provided, otherwise default
     api_key = api_key if api_key is not None else API_KEY_DEFAULT
-    endpoint_url = endpoint_url if endpoint_url is not None else URL_DEFAULT
 
-    endpoint_url = endpoint_url + ENDPOINT
+    endpoint_url = URL_DEFAULT + endpoint
+    if db_url is not None:
+        # endpoint_url = endpoint_url + f"?resourcename={db_url}"
+        PARAMS_DEFAULT["resourcename"] = db_url
+
     headers = {"X-API-Key": api_key}
 
     # Define max retries and delay for exponential backoff
@@ -89,7 +93,7 @@ def fetch_data_from_genieapi(api_key=None, endpoint_url=None, text_query=None, t
 def post_data_to_genieapi(api_key=None, endpoint=None, params=None, post_body=None):
     # Set defaults
     API_KEY_DEFAULT = os.environ.get("API_KEY", "")
-    URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev")
+    URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
 
 
     # PARAMS_DEFAULT = {
@@ -149,3 +153,27 @@ def cool_name_generator(input_string):
     name = f"{ADJECTIVES[adj_index]}-{NOUNS[noun_index]}"
     return name
 
+
+def redact_credentials_from_url(url: None):
+    if url is None:
+        return url
+    parsed = urlparse(url)
+
+    # Replace the netloc part of the url
+    if "@" in parsed.netloc:
+        user_password, netloc = parsed.netloc.split("@", 1)
+        redacted_netloc = f"REDACTED:REDACTED@{netloc}"
+    else:
+        redacted_netloc = parsed.netloc
+
+    # Construct the redacted URL
+    redacted_url = urlunparse((
+        parsed.scheme,
+        redacted_netloc,
+        parsed.path,
+        parsed.params,
+        parsed.query,
+        parsed.fragment
+    ))
+
+    return redacted_url

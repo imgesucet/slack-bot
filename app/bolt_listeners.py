@@ -391,8 +391,9 @@ def respond_to_new_message(
 
         api_key = None
         table_name = context.get("db_table")
+        db_url = context.get("db_url")
 
-        loading_text = fetch_data_from_genieapi(api_key, None, last_message["text"], table_name)
+        loading_text = fetch_data_from_genieapi(api_key, "/language_to_sql", last_message["text"], table_name, db_url)
 
         wip_reply = post_wip_message_with_attachment(
             client=client,
