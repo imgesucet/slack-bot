@@ -60,7 +60,7 @@ s3_client = boto3.client(
 )
 
 client_template = WebClient(
-    token=SLACK_BOT_TOKEN,
+    # token=SLACK_BOT_TOKEN,
 )
 client_template.retry_handlers.append(RateLimitErrorRetryHandler(max_retry_count=2))
 
@@ -486,9 +486,9 @@ def oauth_redirect():
     return slack_handler.handle(req=request)
 
 
-@app_http.route("/slack/install", methods=["GET"])
-def oauth_redirect():
-    return slack_handler.handle(req=request)
+# @app_http.route("/slack/install", methods=["GET"])
+# def oauth_redirect():
+#     return slack_handler.handle(req=request)
 
 # Create a function that starts the Flask server
 def start_healthcheck_server():
