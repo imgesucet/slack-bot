@@ -33,7 +33,7 @@ gptinslack:
     SERVER_ROLE: prod
     SLACK_APP_LOG_LEVEL: DEBUG
     TRANSLATE_MARKDOWN: true
-#    SLACK_SCOPES: app_mentions:read,channels:history,groups:history,im:history,mpim:history,chat:write.public,chat:write,users:read
+    SLACK_SCOPES: "app_mentions:read,channels:history,groups:history,im:history,mpim:history,chat:write.public,chat:write,users:read"
 
 healthcheck:
   url: /healthcheck
