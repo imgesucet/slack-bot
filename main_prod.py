@@ -1,11 +1,14 @@
 import json
 import logging
 import os
+import threading
+
 import botocore
 
 from slack_sdk.web import WebClient
 from slack_sdk.http_retry.builtin_handlers import RateLimitErrorRetryHandler
 from slack_bolt import App, Ack, BoltContext
+from flask import Flask, jsonify
 
 from app.bolt_listeners import register_listeners, before_authorize
 from app.env import (
@@ -57,7 +60,9 @@ s3_client = boto3.client(
 )
 
 
-client_template = WebClient()
+client_template = WebClient(
+    token=SLACK_BOT_TOKEN,
+)
 client_template.retry_handlers.append(RateLimitErrorRetryHandler(max_retry_count=2))
 
 
@@ -119,7 +124,7 @@ oauth_settings = OAuthSettings(
     # installation_store=...,  # This could be FileInstallationStore or some custom installation store you create
 )
 app = App(
-    token=SLACK_BOT_TOKEN,
+
     process_before_response=True,
     before_authorize=before_authorize,
     oauth_flow=LambdaS3OAuthFlow(settings=oauth_settings),
@@ -444,15 +449,26 @@ app.view("configure")(
 )
 
 slack_handler = SlackRequestHandler(app=app)
+app_http = Flask(__name__)
 
-@app.route("/slack/events", methods=["POST"])
+@app_http.route("/slack/events", methods=["POST"])
 def slack_events(request):
     return slack_handler.handle(request)
 
-@app.route("/healthcheck", methods=["GET"])
-def slack_events(request):
-    return 200
+@app_http.route("/healthcheck", methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok"}), 200
 
-port = int(os.getenv('PORT', 9891))
-if __name__ == "__main__":
-    app.start(port=port)
+
+# Create a function that starts the Flask server
+def start_healthcheck_server():
+    port = int(os.getenv('PORT', 9891))
+    app_http.run(host='0.0.0.0', port=port)
+
+# Wrap your Flask server start inside a thread, so it doesn't block your Slack bot
+healthcheck_thread = threading.Thread(target=start_healthcheck_server)
+healthcheck_thread.start()
+
+# port = int(os.getenv('PORT', 9891))
+# if __name__ == "__main__":
+#     app.start(port=port)
