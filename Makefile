@@ -14,7 +14,10 @@ docker_build:
 	docker build -t gptinslack .
 
 docker: docker_build
-	docker run --env SERVER_ROLE=webapp --env-file ./scripts/$(TARGET_ENV_FILE).sh -it -p 9891:9891 gptinslack
+	docker run --env SERVER_ROLE=ws --env-file ./scripts/$(TARGET_ENV_FILE).sh -it -p 9891:9891 gptinslack
+
+docker_prod: docker_build
+	docker run --env SERVER_ROLE=prod --env-file ./scripts/$(TARGET_ENV_FILE).sh -it -p 9891:9891 gptinslack
 
 
 ###################### HELM ######################

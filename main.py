@@ -98,18 +98,6 @@ if __name__ == "__main__":
         )
 
 
-    if USE_SLACK_LANGUAGE is True:
-        @app.middleware
-        def set_locale(
-                context: BoltContext,
-                client: WebClient,
-                next_,
-        ):
-            user_id = context.actor_user_id or context.user_id
-            user_info = client.users_info(user=user_id, include_locale=True)
-            context["locale"] = user_info.get("user", {}).get("locale")
-            next_()
-
 
     @app.middleware
     def set_s3_openai_api_key(context: BoltContext, next_):

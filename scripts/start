@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+if [ "${SERVER_ROLE}" == "ws" ]; then
+  python main.py
+fi
+
+
+if [ "${SERVER_ROLE}" == "prod" ]; then
+  python main_prod.py
+fi
+

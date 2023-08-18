@@ -14,6 +14,10 @@ gptinslack:
     SLACK_APP_TOKEN: SLACK_APP_TOKEN
     SLACK_BOT_TOKEN: SLACK_BOT_TOKEN
     SLACK_SIGNING_SECRET: SLACK_SIGNING_SECRET
+    SLACK_CLIENT_ID: SLACK_CLIENT_ID
+    SLACK_CLIENT_SECRET: SLACK_CLIENT_SECRET
+    SLACK_STATE_S3_BUCKET_NAME: SLACK_STATE_S3_BUCKET_NAME
+    SLACK_INSTALLATION_S3_BUCKET_NAME: SLACK_INSTALLATION_S3_BUCKET_NAME
     API_KEY: API_KEY
     AWS_ACCESS_KEY_ID: AWS_ACCESS_KEY_ID
     AWS_SECRET_ACCESS_KEY: AWS_SECRET_ACCESS_KEY
@@ -26,6 +30,8 @@ gptinslack:
     DEFAULT_OPENAI_MODEL: gpt-3.5-turbo
     DEFAULT_OPENAI_TEMPERATURE: 1
     GENIEAPI_HOST: https://genieapi.defytrends.dev/api
+    SERVER_ROLE: prod
+#    SLACK_SCOPES: app_mentions:read,channels:history,groups:history,im:history,mpim:history,chat:write.public,chat:write,users:read
 
 healthcheck:
   url: /healthcheck

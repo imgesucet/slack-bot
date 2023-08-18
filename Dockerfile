@@ -18,10 +18,14 @@ RUN chown django:django /app/app/
 COPY --chown=django:django app/*.py /app/app/
 COPY --chown=django:django --from=builder /usr/local/bin/ /usr/local/bin/
 COPY --chown=django:django --from=builder /usr/local/lib/ /usr/local/lib/
+COPY --chown=django:django ./scripts/start /start
+RUN sed -i 's/\r$//g' /start
+RUN chmod +x /start
 
 USER django
 
-ENTRYPOINT python main.py
+#ENTRYPOINT
+ENTRYPOINT ["/start"]
 
 # docker build . -t your-repo/chat-gpt-in-slack
 # export SLACK_APP_TOKEN=xapp-...
