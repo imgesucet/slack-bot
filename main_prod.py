@@ -73,6 +73,7 @@ def register_revocation_handlers(app: App):
             context: BoltContext,
             logger: logging.Logger,
     ):
+        logger.info("register_revocation_handlers, init")
         user_ids = event.get("tokens", {}).get("oauth", [])
         if len(user_ids) > 0:
             for user_id in user_ids:
@@ -99,6 +100,7 @@ def register_revocation_handlers(app: App):
             context: BoltContext,
             logger: logging.Logger,
     ):
+        logger.info("handle_app_uninstalled_events, init")
         app.installation_store.delete_all(
             enterprise_id=context.enterprise_id,
             team_id=context.team_id,
@@ -322,7 +324,9 @@ def save_s3(
 
 
 @app.event("app_home_opened")
-def render_home_tab(client: WebClient, context: BoltContext):
+def render_home_tab(client: WebClient, context: BoltContext, logger: logging.Logger):
+    logger.info("render_home_tab, init")
+
     message = DEFAULT_HOME_TAB_MESSAGE
     configure_label = DEFAULT_HOME_TAB_CONFIGURE_LABEL
     try:
@@ -349,7 +353,8 @@ def render_home_tab(client: WebClient, context: BoltContext):
 
 
 @app.action("configure")
-def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext):
+def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext, logger: logging.Logger):
+    logger.info("handle_some_action, init")
     ack()
     already_set_api_key = context.get("OPENAI_API_KEY")
     api_key_text = "Save your Genie API key:"
@@ -415,7 +420,9 @@ def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext)
     )
 
 
-def validate_api_key_registration(ack: Ack, view: dict, context: BoltContext):
+def validate_api_key_registration(ack: Ack, view: dict, context: BoltContext, logger: logging.Logger):
+    logger.info("validate_api_key_registration, init")
+    ack()
     already_set_api_key = context.get("OPENAI_API_KEY")
 
     inputs = view["state"]["values"]
@@ -443,6 +450,7 @@ def save_api_key_registration(
         logger: logging.Logger,
         context: BoltContext,
 ):
+    logger.info("save_api_key_registration, init")
     inputs = view["state"]["values"]
     api_key = inputs["api_key"]["input"]["value"]
     model = inputs["model"]["input"]["selected_option"]["value"]
