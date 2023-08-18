@@ -8,7 +8,7 @@ import botocore
 from slack_sdk.web import WebClient
 from slack_sdk.http_retry.builtin_handlers import RateLimitErrorRetryHandler
 from slack_bolt import App, Ack, BoltContext
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 
 from app.bolt_listeners import register_listeners, before_authorize
 from app.env import (
@@ -452,8 +452,8 @@ slack_handler = SlackRequestHandler(app=app)
 app_http = Flask(__name__)
 
 @app_http.route("/slack/events", methods=["POST"])
-def slack_events(request):
-    return slack_handler.handle(request)
+def slack_events():
+    return slack_handler.handle(req=request)
 
 @app_http.route("/healthcheck", methods=['GET'])
 def health_check():
