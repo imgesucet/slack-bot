@@ -445,12 +445,13 @@ app.view("configure")(
 
 slack_handler = SlackRequestHandler(app=app)
 
-# @app.route("/slack/events", methods=["POST"])
-# def slack_events(request):
-#     return slack_handler.handle(request)
+@app.route("/slack/events", methods=["POST"])
+def slack_events(request):
+    return slack_handler.handle(request)
 
-
-
+@app.route("/healthcheck", methods=["GET"])
+def slack_events(request):
+    return 200
 
 port = int(os.getenv('PORT', 9891))
 if __name__ == "__main__":
