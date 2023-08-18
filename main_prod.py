@@ -59,7 +59,6 @@ s3_client = boto3.client(
     verify=False  # Consider this only if you have SSL issues, but be aware of the security implications
 )
 
-
 client_template = WebClient(
     token=SLACK_BOT_TOKEN,
 )
@@ -134,6 +133,7 @@ app.oauth_flow.settings.install_page_rendering_enabled = False
 register_listeners(app)
 register_revocation_handlers(app)
 
+
 @app.middleware
 def set_s3_openai_api_key(context: BoltContext, next_):
     try:
@@ -174,6 +174,7 @@ def set_s3_openai_api_key(context: BoltContext, next_):
         context["OPENAI_API_KEY"] = None
     next_()
 
+
 @app.command("/set_db_table")
 def handle_set_db_table(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
     # Acknowledge command request
@@ -187,6 +188,7 @@ def handle_set_db_table(ack, body, command, respond, context: BoltContext, logge
         respond(text=f"DB Table set to: {value}")  # Respond to the command
     else:
         respond(text="You must provide the DB Table after. eg /set_db_table tvl")
+
 
 @app.command("/set_db_url")
 def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
@@ -214,6 +216,7 @@ def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger:
     else:
         respond(
             text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
+
 
 @app.command("/get_db_urls")
 def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
@@ -243,6 +246,7 @@ def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger
         logger.exception(e)
         return respond(text=f"Failed to get DB URLs")  # Respond to the command
 
+
 @app.command("/set_db_type")
 def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
     # Acknowledge command request
@@ -257,6 +261,7 @@ def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger
     else:
         respond(text="You must provide the DB Type after /set_db_type POSTGRES")
 
+
 @app.command("/set_key")
 def handle_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
     # Acknowledge command request
@@ -270,6 +275,7 @@ def handle_set_key(ack, body, command, respond, context: BoltContext, logger: lo
         respond(text=f"API Key set to: {api_key}")  # Respond to the command
     else:
         respond(text="You must provide an API key after /set_key asd123")
+
 
 def save_s3(
         key: str,
@@ -314,6 +320,7 @@ def save_s3(
         logger.error(f"save_s3, Encountered an error Exception, with boto3: {e}")
         return
 
+
 @app.event("app_home_opened")
 def render_home_tab(client: WebClient, context: BoltContext):
     message = DEFAULT_HOME_TAB_MESSAGE
@@ -339,6 +346,7 @@ def render_home_tab(client: WebClient, context: BoltContext):
         user_id=context.user_id,
         view=build_home_tab(message, configure_label),
     )
+
 
 @app.action("configure")
 def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext):
@@ -406,6 +414,7 @@ def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext)
         },
     )
 
+
 def validate_api_key_registration(ack: Ack, view: dict, context: BoltContext):
     already_set_api_key = context.get("OPENAI_API_KEY")
 
@@ -428,6 +437,7 @@ def validate_api_key_registration(ack: Ack, view: dict, context: BoltContext):
             errors={"api_key": text},
         )
 
+
 def save_api_key_registration(
         view: dict,
         logger: logging.Logger,
@@ -443,6 +453,7 @@ def save_api_key_registration(
     except Exception as e:
         logger.exception(e)
 
+
 app.view("configure")(
     ack=validate_api_key_registration,
     lazy=[save_api_key_registration],
@@ -451,19 +462,26 @@ app.view("configure")(
 slack_handler = SlackRequestHandler(app=app)
 app_http = Flask(__name__)
 
+
 @app_http.route("/slack/events", methods=["POST"])
 def slack_events():
     return slack_handler.handle(req=request)
+
 
 @app_http.route("/healthcheck", methods=['GET'])
 def health_check():
     return jsonify({"status": "ok"}), 200
 
 
+@app_http.route("/slack/oauth_redirect", methods=["GET"])
+def oauth_redirect():
+    return slack_handler.handle(req=request)
+
 # Create a function that starts the Flask server
 def start_healthcheck_server():
     port = int(os.getenv('PORT', 9891))
     app_http.run(host='0.0.0.0', port=port)
+
 
 # Wrap your Flask server start inside a thread, so it doesn't block your Slack bot
 healthcheck_thread = threading.Thread(target=start_healthcheck_server)

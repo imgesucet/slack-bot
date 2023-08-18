@@ -27,6 +27,7 @@ def to_flask_response(bolt_resp: BoltResponse) -> Response:
 
 class SlackRequestHandler:
     def __init__(self, app: App):  # type: ignore
+        print(f"SlackRequestHandler, init, app={app}")
         self.app = app
 
     def handle(self, req: Request) -> Response:

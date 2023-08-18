@@ -4,7 +4,7 @@ display_information:
   background_color: "#323336"
 features:
   app_home:
-    home_tab_enabled: false
+    home_tab_enabled: true
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   bot_user:
@@ -12,22 +12,32 @@ features:
     always_online: true
   slash_commands:
     - command: /set_key
+      url: https://gptinslack.defytrends.dev/slack/events
       description: Set your API KEY
       usage_hint: "[API_KEY_HERE]"
       should_escape: false
     - command: /set_db_type
+      url: https://gptinslack.defytrends.dev/slack/events
       description: Set your DB type
       usage_hint: "[POSTGRES]"
       should_escape: false
     - command: /set_db_url
+      url: https://gptinslack.defytrends.dev/slack/events
       description: Set your DB Connection String URL
       usage_hint: "[postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]"
       should_escape: false
     - command: /set_db_table
+      url: https://gptinslack.defytrends.dev/slack/events
       description: Set your DB Table
       usage_hint: "[tvl]"
       should_escape: false
+    - command: /get_db_urls
+      description: Get your DB Connections
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
 oauth_config:
+  redirect_urls:
+    - https://gptinslack.defytrends.dev/slack/oauth_redirect
   scopes:
     bot:
       - app_mentions:read
@@ -43,14 +53,19 @@ oauth_config:
       - files:read
 settings:
   event_subscriptions:
+    request_url: https://gptinslack.defytrends.dev/slack/events
     bot_events:
+      - app_home_opened
       - app_mention
+      - app_uninstalled
       - message.channels
       - message.groups
       - message.im
       - message.mpim
+      - tokens_revoked
   interactivity:
     is_enabled: true
+    request_url: https://gptinslack.defytrends.dev/slack/events
   org_deploy_enabled: false
-  socket_mode_enabled: true
+  socket_mode_enabled: false
   token_rotation_enabled: false

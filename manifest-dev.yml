@@ -27,6 +27,9 @@ features:
       description: Set your DB Table
       usage_hint: "[tvl]"
       should_escape: false
+    - command: /get_db_urls
+      description: Get your DB Connections
+      should_escape: false
 oauth_config:
   scopes:
     bot:
