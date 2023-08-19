@@ -114,7 +114,7 @@ def register_revocation_handlers(app: App):
 oauth_settings = OAuthSettings(
     client_id=SLACK_CLIENT_ID,
     client_secret=SLACK_CLIENT_SECRET,
-    redirect_uri="https://gptinslack.defytrends.dev",  # Optional
+    redirect_uri="https://gptinslack.defytrends.dev/slack/oauth_redirect",  # Optional
     install_page_rendering_enabled=True,
     # scopes=["channels:read", "groups:read", ...],  # Add the scopes your app needs
     # redirect_uri="YOUR_OAUTH_REDIRECT_URL",  # This should match the Redirect URL set in your Slack app settings
