@@ -34,6 +34,7 @@ from app.utils import cool_name_generator, redact_string, post_data_to_genieapi,
 from slack_handler import SlackRequestHandler
 from slack_s3_oauth_flow import LambdaS3OAuthFlow
 from slack_bolt.oauth.oauth_settings import OAuthSettings
+from slack_bolt.lazy_listener import LazyListenerRunner
 
 logging.basicConfig(format="%(asctime)s %(message)s", level=SLACK_APP_LOG_LEVEL)
 
@@ -56,7 +57,7 @@ s3_client = boto3.client(
     aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
     endpoint_url=AWS_S3_ENDPOINT_URL,
     region_name=AWS_S3_REGION_NAME,
-    verify=False  # Consider this only if you have SSL issues, but be aware of the security implications
+    verify=True  # Consider this only if you have SSL issues, but be aware of the security implications
 )
 
 client_template = WebClient()
@@ -123,11 +124,17 @@ oauth_settings = OAuthSettings(
     # state_store=...,  # This could be FileOAuthStateStore or some custom state store you create
     # installation_store=...,  # This could be FileInstallationStore or some custom installation store you create
 )
+
+class CustomLazyListenerRunner(LazyListenerRunner):
+    def start(self, function, request):
+        function(request)
+
 app = App(
     process_before_response=True,
     before_authorize=before_authorize,
     oauth_flow=LambdaS3OAuthFlow(settings=oauth_settings),
     client=client_template,
+    lazy_listener_runner=CustomLazyListenerRunner(),
 )
 register_listeners(app)
 register_revocation_handlers(app)

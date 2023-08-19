@@ -44,7 +44,7 @@ class LambdaS3OAuthFlow(OAuthFlow):
             aws_secret_access_key=AWS_SECRET_ACCESS_KEY,
             endpoint_url=AWS_S3_ENDPOINT_URL,
             region_name=AWS_S3_REGION_NAME,
-            verify=False  # Consider this only if you have SSL issues, but be aware of the security implications
+            verify=True  # Consider this only if you have SSL issues, but be aware of the security implications
         )
         # self.s3_client = boto3.client("s3")
         self.s3_client = s3_client
