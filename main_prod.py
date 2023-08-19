@@ -368,7 +368,7 @@ def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext,
         view={
             "type": "modal",
             "callback_id": "configure",
-            "title": {"type": "plain_text", "text": "OpenAI API Key"},
+            "title": {"type": "plain_text", "text": "Genie API Key"},
             "submit": {"type": "plain_text", "text": submit},
             "close": {"type": "plain_text", "text": cancel},
             "blocks": [
@@ -378,35 +378,35 @@ def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext,
                     "label": {"type": "plain_text", "text": api_key_text},
                     "element": {"type": "plain_text_input", "action_id": "input"},
                 },
-                {
-                    "type": "input",
-                    "block_id": "model",
-                    "label": {"type": "plain_text", "text": "OpenAI Model"},
-                    "element": {
-                        "type": "static_select",
-                        "action_id": "input",
-                        "options": [
-                            {
-                                "text": {
-                                    "type": "plain_text",
-                                    "text": "GPT-3.5 Turbo",
-                                },
-                                "value": "gpt-3.5-turbo",
-                            },
-                            {
-                                "text": {"type": "plain_text", "text": "GPT-4"},
-                                "value": "gpt-4",
-                            },
-                        ],
-                        "initial_option": {
-                            "text": {
-                                "type": "plain_text",
-                                "text": "GPT-3.5 Turbo",
-                            },
-                            "value": "gpt-3.5-turbo",
-                        },
-                    },
-                },
+                # {
+                #     "type": "input",
+                #     "block_id": "model",
+                #     "label": {"type": "plain_text", "text": "OpenAI Model"},
+                #     "element": {
+                #         "type": "static_select",
+                #         "action_id": "input",
+                #         "options": [
+                #             {
+                #                 "text": {
+                #                     "type": "plain_text",
+                #                     "text": "GPT-3.5 Turbo",
+                #                 },
+                #                 "value": "gpt-3.5-turbo",
+                #             },
+                #             {
+                #                 "text": {"type": "plain_text", "text": "GPT-4"},
+                #                 "value": "gpt-4",
+                #             },
+                #         ],
+                #         "initial_option": {
+                #             "text": {
+                #                 "type": "plain_text",
+                #                 "text": "GPT-3.5 Turbo",
+                #             },
+                #             "value": "gpt-3.5-turbo",
+                #         },
+                #     },
+                # },
             ],
         },
     )

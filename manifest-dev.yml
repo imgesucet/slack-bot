@@ -11,23 +11,23 @@ features:
     display_name: Genie Bot (dev-tom)
     always_online: true
   slash_commands:
-    - command: /set_key
+    - command: /dset_key
       description: Set your API KEY
       usage_hint: "[API_KEY_HERE]"
       should_escape: false
-    - command: /set_db_type
+    - command: /dset_db_type
       description: Set your DB type
       usage_hint: "[POSTGRES]"
       should_escape: false
-    - command: /set_db_url
+    - command: /dset_db_url
       description: Set your DB Connection String URL
       usage_hint: "[postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]"
       should_escape: false
-    - command: /set_db_table
+    - command: /dset_db_table
       description: Set your DB Table
       usage_hint: "[tvl]"
       should_escape: false
-    - command: /get_db_urls
+    - command: /dget_db_urls
       description: Get your DB Connections
       should_escape: false
 oauth_config:

@@ -140,7 +140,7 @@ if __name__ == "__main__":
         next_()
 
 
-    @app.command("/set_db_table")
+    @app.command("/dset_db_table")
     def handle_set_db_table(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
@@ -155,7 +155,7 @@ if __name__ == "__main__":
             respond(text="You must provide the DB Table after. eg /set_db_table tvl")
 
 
-    @app.command("/set_db_url")
+    @app.command("/dset_db_url")
     def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
@@ -182,7 +182,7 @@ if __name__ == "__main__":
             respond(
                 text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
 
-    @app.command("/get_db_urls")
+    @app.command("/dget_db_urls")
     def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
@@ -210,7 +210,7 @@ if __name__ == "__main__":
             logger.exception(e)
             return respond(text=f"Failed to get DB URLs")  # Respond to the command
 
-    @app.command("/set_db_type")
+    @app.command("/dset_db_type")
     def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
@@ -225,7 +225,7 @@ if __name__ == "__main__":
             respond(text="You must provide the DB Type after /set_db_type POSTGRES")
 
 
-    @app.command("/set_key")
+    @app.command("/dset_key")
     def handle_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
         ack()
