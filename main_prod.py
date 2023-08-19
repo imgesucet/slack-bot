@@ -359,20 +359,9 @@ def render_home_tab(client: WebClient, context: BoltContext, logger: logging.Log
 def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext, logger: logging.Logger):
     logger.info("handle_some_action, init")
     ack()
-    already_set_api_key = context.get("OPENAI_API_KEY")
     api_key_text = "Save your Genie API key:"
     submit = "Submit"
     cancel = "Cancel"
-    if already_set_api_key is not None:
-        api_key_text = translate(
-            openai_api_key=already_set_api_key, context=context, text=api_key_text
-        )
-        submit = translate(
-            openai_api_key=already_set_api_key, context=context, text=submit
-        )
-        cancel = translate(
-            openai_api_key=already_set_api_key, context=context, text=cancel
-        )
 
     client.views_open(
         trigger_id=body["trigger_id"],
@@ -465,12 +454,6 @@ def save_api_key_registration(
         logger.exception(e)
 
 
-# app.view("configure")(
-#     ack=validate_api_key_registration,
-#     lazy=[save_api_key_registration],
-# )
-
-
 slack_handler = SlackRequestHandler(app=app)
 
 flask_app = Flask(__name__)
@@ -523,8 +506,3 @@ def install():
 if __name__ == "__main__":
     port = int(os.getenv('PORT', 9891))
     flask_app.run(host='0.0.0.0', port=port)
-
-
-# # Wrap your Flask server start inside a thread, so it doesn't block your Slack bot
-# healthcheck_thread = threading.Thread(target=start_healthcheck_server)
-# healthcheck_thread.start()
