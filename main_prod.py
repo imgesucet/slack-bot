@@ -59,9 +59,7 @@ s3_client = boto3.client(
     verify=False  # Consider this only if you have SSL issues, but be aware of the security implications
 )
 
-client_template = WebClient(
-    # token=SLACK_BOT_TOKEN,
-)
+client_template = WebClient()
 client_template.retry_handlers.append(RateLimitErrorRetryHandler(max_retry_count=2))
 
 
@@ -131,9 +129,15 @@ app = App(
     oauth_flow=LambdaS3OAuthFlow(),
     client=client_template,
 )
-app.oauth_flow.settings.install_page_rendering_enabled = False
+app.oauth_flow.settings.install_page_rendering_enabled = True
 register_listeners(app)
 register_revocation_handlers(app)
+
+
+@app.middleware
+def log_request(logger, body, next):
+    logger.debug(body)
+    return next()
 
 
 @app.middleware
@@ -420,29 +424,29 @@ def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext,
     )
 
 
-def validate_api_key_registration(ack: Ack, view: dict, context: BoltContext, logger: logging.Logger):
+def validate_api_key_registration(view: dict, context: BoltContext, logger: logging.Logger):
     logger.info("validate_api_key_registration, init")
-    ack()
-    already_set_api_key = context.get("OPENAI_API_KEY")
 
+    already_set_api_key = context.get("OPENAI_API_KEY")
     inputs = view["state"]["values"]
     api_key = inputs["api_key"]["input"]["value"]
+
     try:
-        ## Verify if the API key is valid
         isauth = fetch_data_from_genieapi(api_key, "/isauth", None, None, None)
         if isauth["message"] != "ok":
             raise Exception("Invalid Genie API KEY")
-        ack()
     except Exception:
         text = "This API key seems to be invalid"
         if already_set_api_key is not None:
             text = translate(
                 openai_api_key=already_set_api_key, context=context, text=text
             )
-        ack(
+        return jsonify(
             response_action="errors",
             errors={"api_key": text},
-        )
+        ), 400  # Return a 400 Bad Request status code
+
+    return jsonify({"message": "Validation successful"}), 200
 
 
 def save_api_key_registration(
@@ -462,44 +466,66 @@ def save_api_key_registration(
         logger.exception(e)
 
 
-app.view("configure")(
-    ack=validate_api_key_registration,
-    lazy=[save_api_key_registration],
-)
+# app.view("configure")(
+#     ack=validate_api_key_registration,
+#     lazy=[save_api_key_registration],
+# )
+
 
 slack_handler = SlackRequestHandler(app=app)
-app_http = Flask(__name__)
+
+flask_app = Flask(__name__)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+
+@flask_app.route("/slack/configure", methods=["POST"])
+def slack_configure():
+    logger.info("slack_configure, init")
+
+    payload = request.json
+    view = payload.get('view', {})
+    context = BoltContext()  # Again, assuming fictional context creation.
+
+    try:
+        validate_api_key_registration(Ack(), view, context, logger)
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)})
+
+    try:
+        save_api_key_registration(view, logger, context)
+    except Exception as e:
+        logger.exception(e)
+        return jsonify({'status': 'error', 'message': str(e)})
+
+    return jsonify({'status': 'ok'})
 
 
-@app_http.route("/slack/events", methods=["POST"])
+@flask_app.route("/slack/events", methods=["POST"])
 def slack_events():
     return slack_handler.handle(req=request)
 
 
-@app_http.route("/healthcheck", methods=['GET'])
+@flask_app.route("/healthcheck", methods=['GET'])
 def health_check():
     return jsonify({"status": "ok"}), 200
 
 
-@app_http.route("/slack/oauth_redirect", methods=["GET"])
+@flask_app.route("/slack/oauth_redirect", methods=["GET"])
 def oauth_redirect():
     return slack_handler.handle(req=request)
 
 
-# @app_http.route("/slack/install", methods=["GET"])
-# def oauth_redirect():
-#     return slack_handler.handle(req=request)
+@flask_app.route("/slack/install", methods=["GET"])
+def install():
+    return slack_handler.handle(request)
+
 
 # Create a function that starts the Flask server
 def start_healthcheck_server():
     port = int(os.getenv('PORT', 9891))
-    app_http.run(host='0.0.0.0', port=port)
+    flask_app.run(host='0.0.0.0', port=port)
 
 
 # Wrap your Flask server start inside a thread, so it doesn't block your Slack bot
 healthcheck_thread = threading.Thread(target=start_healthcheck_server)
 healthcheck_thread.start()
-
-# port = int(os.getenv('PORT', 9891))
-# if __name__ == "__main__":
-#     app.start(port=port)
