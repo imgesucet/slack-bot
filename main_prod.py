@@ -118,7 +118,7 @@ oauth_settings = OAuthSettings(
     install_page_rendering_enabled=False,
     # scopes=["channels:read", "groups:read", ...],  # Add the scopes your app needs
     # redirect_uri="YOUR_OAUTH_REDIRECT_URL",  # This should match the Redirect URL set in your Slack app settings
-    install_path="/slack/install",  # The endpoint users visit to install the app
+    install_path="/install",  # The endpoint users visit to install the app
     redirect_uri_path="/slack/oauth_redirect",  # The endpoint Slack redirects to after the user authorizes your app
     # state_store=...,  # This could be FileOAuthStateStore or some custom state store you create
     # installation_store=...,  # This could be FileInstallationStore or some custom installation store you create
@@ -129,7 +129,7 @@ app = App(
     oauth_flow=LambdaS3OAuthFlow(),
     client=client_template,
 )
-app.oauth_flow.settings.install_page_rendering_enabled = True
+app.oauth_flow.settings.install_page_rendering_enabled = False
 register_listeners(app)
 register_revocation_handlers(app)
 
@@ -515,7 +515,7 @@ def oauth_redirect():
     return slack_handler.handle(req=request)
 
 
-@flask_app.route("/slack/install", methods=["GET"])
+@flask_app.route("/install", methods=["GET"])
 def install():
     return slack_handler.handle(request)
 
