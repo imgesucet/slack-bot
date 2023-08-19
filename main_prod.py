@@ -437,10 +437,10 @@ def save_api_key_registration(
     logger.info("save_api_key_registration, init")
     inputs = view["state"]["values"]
     api_key = inputs["api_key"]["input"]["value"]
-    model = inputs["model"]["input"]["selected_option"]["value"]
+    # model = inputs["model"]["input"]["selected_option"]["value"]
     try:
         save_s3("api_key", api_key, logger, context)
-        save_s3("api_key_model", model, logger, context)
+        # save_s3("api_key_model", model, logger, context)
     except Exception as e:
         raise Exception(f"Failed to save Genie API KEY, e={e}")
 
