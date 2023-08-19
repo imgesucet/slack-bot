@@ -34,7 +34,6 @@ from app.utils import cool_name_generator, redact_string, post_data_to_genieapi,
 from slack_handler import SlackRequestHandler
 from slack_s3_oauth_flow import LambdaS3OAuthFlow
 from slack_bolt.oauth.oauth_settings import OAuthSettings
-from slack_bolt.lazy_listener import LazyListenerRunner
 
 logging.basicConfig(format="%(asctime)s %(message)s", level=SLACK_APP_LOG_LEVEL)
 
@@ -124,17 +123,11 @@ oauth_settings = OAuthSettings(
     # state_store=...,  # This could be FileOAuthStateStore or some custom state store you create
     # installation_store=...,  # This could be FileInstallationStore or some custom installation store you create
 )
-
-class CustomLazyListenerRunner(LazyListenerRunner):
-    def start(self, function, request):
-        function(request)
-
 app = App(
     process_before_response=True,
     before_authorize=before_authorize,
     oauth_flow=LambdaS3OAuthFlow(settings=oauth_settings),
     client=client_template,
-    lazy_listener_runner=CustomLazyListenerRunner(),
 )
 register_listeners(app)
 register_revocation_handlers(app)
@@ -527,11 +520,11 @@ def install():
 
 
 # Create a function that starts the Flask server
-def start_healthcheck_server():
+if __name__ == "__main__":
     port = int(os.getenv('PORT', 9891))
     flask_app.run(host='0.0.0.0', port=port)
 
 
-# Wrap your Flask server start inside a thread, so it doesn't block your Slack bot
-healthcheck_thread = threading.Thread(target=start_healthcheck_server)
-healthcheck_thread.start()
+# # Wrap your Flask server start inside a thread, so it doesn't block your Slack bot
+# healthcheck_thread = threading.Thread(target=start_healthcheck_server)
+# healthcheck_thread.start()
