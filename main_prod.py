@@ -126,7 +126,7 @@ oauth_settings = OAuthSettings(
 app = App(
     process_before_response=True,
     before_authorize=before_authorize,
-    oauth_flow=LambdaS3OAuthFlow(),
+    oauth_flow=LambdaS3OAuthFlow(settings=oauth_settings),
     client=client_template,
 )
 app.oauth_flow.settings.install_page_rendering_enabled = False
