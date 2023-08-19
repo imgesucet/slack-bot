@@ -25,7 +25,6 @@ from app.slack_ops import (
     DEFAULT_HOME_TAB_MESSAGE,
     DEFAULT_HOME_TAB_CONFIGURE_LABEL,
 )
-from app.i18n import translate
 
 import boto3
 
@@ -378,39 +377,37 @@ def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext,
                     "label": {"type": "plain_text", "text": api_key_text},
                     "element": {"type": "plain_text_input", "action_id": "input"},
                 },
-                # {
-                #     "type": "input",
-                #     "block_id": "model",
-                #     "label": {"type": "plain_text", "text": "OpenAI Model"},
-                #     "element": {
-                #         "type": "static_select",
-                #         "action_id": "input",
-                #         "options": [
-                #             {
-                #                 "text": {
-                #                     "type": "plain_text",
-                #                     "text": "GPT-3.5 Turbo",
-                #                 },
-                #                 "value": "gpt-3.5-turbo",
-                #             },
-                #             {
-                #                 "text": {"type": "plain_text", "text": "GPT-4"},
-                #                 "value": "gpt-4",
-                #             },
-                #         ],
-                #         "initial_option": {
-                #             "text": {
-                #                 "type": "plain_text",
-                #                 "text": "GPT-3.5 Turbo",
-                #             },
-                #             "value": "gpt-3.5-turbo",
-                #         },
-                #     },
-                # },
             ],
         },
     )
 
+@app.view("configure")
+def handle_modal_submission(ack, view: dict, context: BoltContext, logger):
+    ack()
+    logger.info("handle_modal_submission, configure, init")
+
+    try:
+        validate_api_key_registration(view, context, logger)
+    except Exception as e:
+        logger.exception(e)
+        ack(
+            response_action="errors",
+            errors={"model": "failed to save api key"},
+        )
+        return
+
+    ack()
+    try:
+        save_api_key_registration(view, logger, context)
+    except Exception as e:
+        logger.exception(e)
+        ack(
+            response_action="errors",
+            errors={"model": "failed to save api key"},
+        )
+        return
+
+    return
 
 def validate_api_key_registration(view: dict, context: BoltContext, logger: logging.Logger):
     logger.info("validate_api_key_registration, init")
@@ -419,22 +416,17 @@ def validate_api_key_registration(view: dict, context: BoltContext, logger: logg
     inputs = view["state"]["values"]
     api_key = inputs["api_key"]["input"]["value"]
 
+    logger.info(f"validate_api_key_registration, init, already_set_api_key={already_set_api_key}")
+
     try:
         isauth = fetch_data_from_genieapi(api_key, "/isauth", None, None, None)
         if isauth["message"] != "ok":
             raise Exception("Invalid Genie API KEY")
-    except Exception:
+    except Exception as e:
         text = "This API key seems to be invalid"
-        if already_set_api_key is not None:
-            text = translate(
-                openai_api_key=already_set_api_key, context=context, text=text
-            )
-        return jsonify(
-            response_action="errors",
-            errors={"api_key": text},
-        ), 400  # Return a 400 Bad Request status code
+        logger.exception(e)
+        raise Exception(text)
 
-    return jsonify({"message": "Validation successful"}), 200
 
 
 def save_api_key_registration(
@@ -449,9 +441,8 @@ def save_api_key_registration(
     try:
         save_s3("api_key", api_key, logger, context)
         save_s3("api_key_model", model, logger, context)
-
     except Exception as e:
-        logger.exception(e)
+        raise Exception(f"Failed to save Genie API KEY, e={e}")
 
 
 slack_handler = SlackRequestHandler(app=app)
