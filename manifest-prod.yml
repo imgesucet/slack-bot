@@ -1,6 +1,6 @@
 display_information:
-  name: SQLGenerator (prod)
-  description: Prod app
+  name: Genie
+  description: Genie slack bot app
   background_color: "#323336"
 features:
   app_home:

@@ -10,6 +10,6 @@ fi
 
 
 if [ "${SERVER_ROLE}" == "prod" ]; then
-  python main_prod.py
+  uvicorn --host 0.0.0.0 --port "${PORT}" --log-level=debug --interface wsgi main_prod:flask_app;
 fi
 

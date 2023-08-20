@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import threading
 
 import botocore
 
@@ -492,8 +491,3 @@ def oauth_redirect():
 def install():
     return slack_handler.handle(request)
 
-
-# Create a function that starts the Flask server
-if __name__ == "__main__":
-    port = int(os.getenv('PORT', 9891))
-    flask_app.run(host='0.0.0.0', port=port)
