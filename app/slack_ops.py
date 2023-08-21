@@ -95,7 +95,7 @@ def post_wip_message_with_attachment(
             },
         )
 
-    response = client.files_upload_v2(
+    client.files_upload_v2(
         channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
         thread_ts=thread_ts,
         metadata={
@@ -105,9 +105,9 @@ def post_wip_message_with_attachment(
         file="data.json",  # the path to your file
         filename="data.json"  # the filename that will be displayed in Slack
     )
-    print(f"post_wip_message_with_attachment, data.json, response={response}")
+    print(f"post_wip_message_with_attachment, data.json, done")
 
-    response = client.files_upload_v2(
+    client.files_upload_v2(
         channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
         thread_ts=thread_ts,
         metadata={
@@ -117,7 +117,7 @@ def post_wip_message_with_attachment(
         file="data.txt",  # the path to your file
         filename="data.txt"  # the filename that will be displayed in Slack
     )
-    print(f"post_wip_message_with_attachment, data.txt, response={response}")
+    print(f"post_wip_message_with_attachment, data.txt, done")
 
 
 def json_to_slack_table(json_array):

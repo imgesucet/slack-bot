@@ -469,11 +469,11 @@ def respond_to_new_message(
                     else ""
                 )
                 + "\n\n"
-                + translate(
-                    openai_api_key=openai_api_key,
-                    context=context,
-                    text=TIMEOUT_ERROR_MESSAGE,
-                )
+                # + translate(
+                #     openai_api_key=openai_api_key,
+                #     context=context,
+                #     text=TIMEOUT_ERROR_MESSAGE,
+                # )
             )
             client.chat_update(
                 channel=context.channel_id,

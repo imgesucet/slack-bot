@@ -32,6 +32,7 @@ features:
       should_escape: false
     - command: /dget_db_tables
       description: Get your DB Connection Tables
+      usage_hint: "[bold-sky]"
       should_escape: false
 oauth_config:
   scopes:

@@ -9,7 +9,7 @@ import botocore
 from slack_bolt import App, BoltContext
 from slack_sdk.web import WebClient
 
-from app.bolt_listeners import before_authorize, register_listeners
+from app.bolt_listeners import before_authorize, register_listeners, DEFAULT_LOADING_TEXT
 from app.env import (
     SLACK_APP_LOG_LEVEL,
     DEFAULT_OPENAI_TEMPERATURE, DEFAULT_OPENAI_MODEL, DEFAULT_OPENAI_API_TYPE,
@@ -18,7 +18,7 @@ from app.env import (
 from app.slack_ops import (
     build_home_tab,
     DEFAULT_HOME_TAB_MESSAGE,
-    DEFAULT_HOME_TAB_CONFIGURE_LABEL, post_wip_message_with_attachment,
+    DEFAULT_HOME_TAB_CONFIGURE_LABEL, post_wip_message_with_attachment, post_wip_message,
 )
 from app.i18n import translate
 from app.utils import post_data_to_genieapi, redact_string, cool_name_generator, fetch_data_from_genieapi, \
@@ -182,6 +182,15 @@ if __name__ == "__main__":
         messages = []
         user_id = context.actor_user_id or context.user_id
 
+        wip_reply = post_wip_message(
+            client=client,
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            loading_text=DEFAULT_LOADING_TEXT,
+            messages=messages,
+            user=user_id,
+        )
+
         try:
             loading_text = fetch_data_from_genieapi(api_key, "/list/user/database_connection/tables")
             post_wip_message_with_attachment(
@@ -191,6 +200,11 @@ if __name__ == "__main__":
                 loading_text=loading_text,
                 messages=messages,
                 user=user_id,
+            )
+
+            client.chat_delete(
+                channel=context.channel_id,
+                ts=wip_reply["message"]["ts"],
             )
 
         except Exception as e:

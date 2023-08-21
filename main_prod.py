@@ -9,7 +9,7 @@ from slack_sdk.http_retry.builtin_handlers import RateLimitErrorRetryHandler
 from slack_bolt import App, Ack, BoltContext
 from flask import Flask, jsonify, request
 
-from app.bolt_listeners import register_listeners, before_authorize
+from app.bolt_listeners import register_listeners, before_authorize, DEFAULT_LOADING_TEXT
 from app.env import (
     SLACK_APP_LOG_LEVEL,
     DEFAULT_OPENAI_MODEL,
@@ -22,7 +22,7 @@ from app.env import (
 from app.slack_ops import (
     build_home_tab,
     DEFAULT_HOME_TAB_MESSAGE,
-    DEFAULT_HOME_TAB_CONFIGURE_LABEL, post_wip_message_with_attachment,
+    DEFAULT_HOME_TAB_CONFIGURE_LABEL, post_wip_message_with_attachment, post_wip_message,
 )
 
 import boto3
@@ -221,6 +221,15 @@ def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logg
     messages = []
     user_id = context.actor_user_id or context.user_id
 
+    wip_reply = post_wip_message(
+        client=client,
+        channel=context.channel_id,
+        thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+        loading_text=DEFAULT_LOADING_TEXT,
+        messages=messages,
+        user=user_id,
+    )
+
     try:
         loading_text = fetch_data_from_genieapi(api_key, "/list/user/database_connection/tables")
         post_wip_message_with_attachment(
@@ -230,6 +239,11 @@ def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logg
             loading_text=loading_text,
             messages=messages,
             user=user_id,
+        )
+
+        client.chat_delete(
+            channel=context.channel_id,
+            ts=wip_reply["message"]["ts"],
         )
 
     except Exception as e:
