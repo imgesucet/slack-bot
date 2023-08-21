@@ -43,7 +43,7 @@ def just_ack(ack: Ack):
 POST_GRES_DICT = {}
 
 TIMEOUT_ERROR_MESSAGE = (
-    f":warning: Sorry! It looks like OpenAI didn't respond within {OPENAI_TIMEOUT_SECONDS} seconds. "
+    f":warning: Sorry! It looks like Genie didn't respond within {OPENAI_TIMEOUT_SECONDS} seconds. "
     "Please try again later. :bow:"
 )
 DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."

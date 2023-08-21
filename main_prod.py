@@ -73,17 +73,27 @@ def register_revocation_handlers(app: App):
         user_ids = event.get("tokens", {}).get("oauth", [])
         if len(user_ids) > 0:
             for user_id in user_ids:
-                app.installation_store.delete_installation(
-                    enterprise_id=context.enterprise_id,
-                    team_id=context.team_id,
-                    user_id=user_id,
-                )
+                try:
+                    app.installation_store.delete_installation(
+                        enterprise_id=context.enterprise_id,
+                        team_id=context.team_id,
+                        user_id=user_id,
+                    )
+                except Exception as e:
+                    logger.error(
+                        f"Failed to installation_store.delete_installation: (team_id: {context.team_id}, enterprise_id:{context.enterprise_id}, user_id={user_id}, error: {e})"
+                    )
         bots = event.get("tokens", {}).get("bot", [])
         if len(bots) > 0:
-            app.installation_store.delete_bot(
-                enterprise_id=context.enterprise_id,
-                team_id=context.team_id,
-            )
+            try:
+                app.installation_store.delete_bot(
+                    enterprise_id=context.enterprise_id,
+                    team_id=context.team_id,
+                )
+            except Exception as e:
+                logger.error(
+                    f"Failed to delete_bot: (team_id: {context.team_id}, enterprise_id:{context.enterprise_id}, error: {e})"
+                )
             try:
                 s3_client.delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
             except Exception as e:
@@ -97,10 +107,15 @@ def register_revocation_handlers(app: App):
             logger: logging.Logger,
     ):
         logger.info("handle_app_uninstalled_events, init")
-        app.installation_store.delete_all(
-            enterprise_id=context.enterprise_id,
-            team_id=context.team_id,
-        )
+        try:
+            app.installation_store.delete_all(
+                enterprise_id=context.enterprise_id,
+                team_id=context.team_id,
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to delete_bot: (team_id: {context.team_id}, enterprise_id:{context.enterprise_id}, error: {e})"
+            )
         try:
             s3_client.delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
         except Exception as e:
