@@ -40,6 +40,11 @@ features:
       usage_hint: "[bold-sky]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /use_db
+      description: Use a DB Connection as default for Genie queries
+      usage_hint: "[bold-sky]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.defytrends.dev/slack/oauth_redirect

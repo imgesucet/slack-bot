@@ -168,7 +168,6 @@ if __name__ == "__main__":
         else:
             respond(text="You must provide the DB Table after. eg /set_db_table tvl")
 
-
     @app.command("/dget_db_tables")
     def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logger: logging.Logger,
                              client: WebClient, payload: dict, ):
@@ -228,7 +227,7 @@ if __name__ == "__main__":
                                       {"connection_string_url": value, "resourcename": resource_name})
 
                 save_s3("db_url", resource_name, logger, context)
-                respond(text=f"DB URL set to: {redact_string(value)}")  # Respond to the command
+                respond(text=f"DB URL set to: {redact_string(resource_name)}")  # Respond to the command
 
             except Exception as e:
                 logger.exception(e)
@@ -295,6 +294,19 @@ if __name__ == "__main__":
         else:
             respond(text="You must provide an API key after /set_key asd123")
 
+    @app.command("/duse_db")
+    def handle_use_db(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+        # Acknowledge command request
+        ack()
+
+        value = command['text']
+        logger.info(f"use_db!!!, value={value}")
+
+        if value:
+            save_s3("db_url", value, logger, context)
+            respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
+        else:
+            respond(text="You must provide the DB alias after. eg /use_db bold-sky")
 
     def save_s3(
             key: str,

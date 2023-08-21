@@ -34,6 +34,10 @@ features:
       description: Get your DB Connection Tables
       usage_hint: "[bold-sky]"
       should_escape: false
+    - command: /duse_db
+      description: Use a DB Connection as default for Genie queries
+      usage_hint: "[bold-sky]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:
