@@ -105,7 +105,7 @@ def respond_to_app_mention(
         if openai_api_key is None:
             client.chat_postMessage(
                 channel=context.channel_id,
-                text="To use this app, please configure your OpenAI API key first",
+                text="To use this app, please configure your Genie API key first",
             )
             return
 

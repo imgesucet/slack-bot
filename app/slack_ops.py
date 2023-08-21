@@ -170,8 +170,8 @@ def update_wip_message(
 # ----------------------------
 
 DEFAULT_HOME_TAB_MESSAGE = (
-    "To enable this app in this Slack workspace, you need to save your OpenAI API key. "
-    "Visit <https://platform.openai.com/account/api-keys|your developer page> to grap your key!"
+    "To enable this app in this Slack workspace, you need to save your Genie API key. "
+    "Visit <https://opengenie.ai/|developer page> to grap your key!"
 )
 
 DEFAULT_HOME_TAB_CONFIGURE_LABEL = "Configure"
