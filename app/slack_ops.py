@@ -65,7 +65,11 @@ def post_wip_message_with_attachment(
     messages: List[Dict[str, str]],
     user: str,
 ) -> SlackResponse:
-    sql = loading_text["sql_query"]
+    try:
+        sql = loading_text.get("sql_query", None)
+    except KeyError:
+        sql = None
+
     json_obj = loading_text["result"]
     table = json_to_slack_table(json_obj)
 
@@ -79,15 +83,17 @@ def post_wip_message_with_attachment(
 
 
     system_messages = [msg for msg in messages if msg["role"] == "system"]
-    client.chat_postMessage(
-        channel=channel,
-        thread_ts=thread_ts,
-        text=sql,
-        metadata={
-            "event_type": "chat-gpt-convo",
-            "event_payload": {"messages": system_messages, "user": user},
-        },
-    )
+
+    if sql is not None:
+        client.chat_postMessage(
+            channel=channel,
+            thread_ts=thread_ts,
+            text=sql,
+            metadata={
+                "event_type": "chat-gpt-convo",
+                "event_payload": {"messages": system_messages, "user": user},
+            },
+        )
 
     response = client.files_upload_v2(
         channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to

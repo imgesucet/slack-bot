@@ -30,6 +30,9 @@ features:
     - command: /dget_db_urls
       description: Get your DB Connections
       should_escape: false
+    - command: /dget_db_tables
+      description: Get your DB Connection Tables
+      should_escape: false
 oauth_config:
   scopes:
     bot:

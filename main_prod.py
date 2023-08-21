@@ -22,7 +22,7 @@ from app.env import (
 from app.slack_ops import (
     build_home_tab,
     DEFAULT_HOME_TAB_MESSAGE,
-    DEFAULT_HOME_TAB_CONFIGURE_LABEL,
+    DEFAULT_HOME_TAB_CONFIGURE_LABEL, post_wip_message_with_attachment,
 )
 
 import boto3
@@ -138,37 +138,53 @@ def log_request(logger, body, next):
 
 
 @app.middleware
-def set_s3_openai_api_key(context: BoltContext, next_):
+def set_s3_openai_api_key(context: BoltContext, next_, logger: logging.Logger):
+    logger.info("set_s3_openai_api_key init")
     try:
-        s3_response = s3_client.get_object(
-            Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id
-        )
-        config_str: str = s3_response["Body"].read().decode("utf-8")
-        if config_str.startswith("{"):
-            config = json.loads(config_str)
-            context["OPENAI_API_KEY"] = config.get("api_key")
-
-            context["api_key"] = config.get("api_key")
-            context["OPENAI_MODEL"] = config.get("model")
-            context["OPENAI_TEMPERATURE"] = config.get(
-                "temperature", DEFAULT_OPENAI_TEMPERATURE
+        key = context.team_id
+        try:
+            s3_response = s3_client.get_object(
+                Bucket=AWS_STORAGE_BUCKET_NAME, Key=key
             )
-        user_id = context.actor_user_id or context.user_id
-        s3_response = s3_client.get_object(
-            Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id + "_" + user_id
-        )
-        config_str: str = s3_response["Body"].read().decode("utf-8")
-        if config_str.startswith("{"):
-            config = json.loads(config_str)
-            context["db_type"] = config.get("db_type")
-            context["db_url"] = config.get("db_url")
-            context["db_table"] = config.get("db_table")
+            config_str: str = s3_response["Body"].read().decode("utf-8")
+            if config_str.startswith("{"):
+                config = json.loads(config_str)
+                logger.info(f"set_s3_openai_api_key, team_id, config={config}")
 
-        else:
-            # The legacy data format
-            context["OPENAI_API_KEY"] = config_str
-            context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
-            context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
+                context["OPENAI_API_KEY"] = config.get("api_key")
+
+                context["api_key"] = config.get("api_key")
+                context["OPENAI_MODEL"] = config.get("model")
+                context["OPENAI_TEMPERATURE"] = config.get(
+                    "temperature", DEFAULT_OPENAI_TEMPERATURE
+                )
+        except s3_client.exceptions.NoSuchKey as e:
+            logger.error(f"set_s3_openai_api_key, team_id, key={key}, error={e}")
+
+        user_id = context.actor_user_id or context.user_id
+
+        key = context.team_id + "_" + user_id
+        try:
+            s3_response = s3_client.get_object(
+                Bucket=AWS_STORAGE_BUCKET_NAME, Key=key
+            )
+            config_str: str = s3_response["Body"].read().decode("utf-8")
+            if config_str.startswith("{"):
+                config = json.loads(config_str)
+                logger.info(f"set_s3_openai_api_key, team_id+user_id, config={config}")
+
+                context["db_type"] = config.get("db_type")
+                context["db_url"] = config.get("db_url")
+                context["db_table"] = config.get("db_table")
+
+            else:
+                # The legacy data format
+                context["OPENAI_API_KEY"] = config_str
+                context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
+                context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
+        except s3_client.exceptions.NoSuchKey as e:
+            logger.error(f"set_s3_openai_api_key, team_id+user_id, key={key}, error={e}")
+
         context["OPENAI_API_TYPE"] = DEFAULT_OPENAI_API_TYPE
         context["OPENAI_API_BASE"] = DEFAULT_OPENAI_API_BASE
         context["OPENAI_API_VERSION"] = DEFAULT_OPENAI_API_VERSION
@@ -184,7 +200,7 @@ def handle_set_db_table(ack, body, command, respond, context: BoltContext, logge
     ack()
 
     value = command['text']
-    print(f"set_db_table!!!, value={value}")
+    logger.info(f"set_db_table!!!, value={value}")
 
     if value:
         save_s3("db_table", value, logger, context)
@@ -193,13 +209,41 @@ def handle_set_db_table(ack, body, command, respond, context: BoltContext, logge
         respond(text="You must provide the DB Table after. eg /set_db_table tvl")
 
 
+@app.command("/get_db_tables")
+def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,payload: dict,):
+    # Acknowledge command request
+    ack()
+
+    logger.info(f"get_db_tables!!!")
+
+    api_key = context["api_key"]
+    is_in_dm_with_bot = True
+    messages = []
+    user_id = context.actor_user_id or context.user_id
+
+    try:
+        loading_text = fetch_data_from_genieapi(api_key, "/list/user/database_connection/tables")
+        post_wip_message_with_attachment(
+            client=client,
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            loading_text=loading_text,
+            messages=messages,
+            user=user_id,
+        )
+
+    except Exception as e:
+        logger.exception(e)
+        return respond(text=f"Failed to get DB tables")  # Respond to the command
+
+
 @app.command("/set_db_url")
 def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
     # Acknowledge command request
     ack()
 
     value = command['text']
-    print(f"set_db_url!!!, value={value}")
+    logger.info(f"set_db_url!!!, value={value}")
 
     if value:
         # save_s3("db_url", value, logger, context)
@@ -226,7 +270,7 @@ def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger
     # Acknowledge command request
     ack()
 
-    print(f"get_db_urls!!!")
+    logger.info(f"get_db_urls!!!")
 
     api_key = context["api_key"]
     try:
@@ -256,7 +300,7 @@ def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger
     ack()
 
     value = command['text']
-    print(f"set_db_type!!!, value={value}")
+    logger.info(f"set_db_type!!!, value={value}")
 
     if value:
         save_s3("db_type", value, logger, context)
@@ -271,7 +315,7 @@ def handle_set_key(ack, body, command, respond, context: BoltContext, logger: lo
     ack()
 
     api_key = command['text']
-    print(f"set_key!!!, api_key={api_key}")
+    logger.info(f"set_key!!!, api_key={api_key}")
 
     if api_key:
         save_s3("api_key", api_key, logger, context)
@@ -291,6 +335,7 @@ def save_s3(
         bucket_key = context.team_id + "_" + user_id
     else:
         bucket_key = context.team_id
+    logger.info(f"save_s3, init, bucket_key={bucket_key}")
 
     try:
         # Step 1: Try to get the existing object from S3
@@ -311,7 +356,7 @@ def save_s3(
         # Step 3: Put the updated or new object back into S3
         s3_client.put_object(
             Bucket=AWS_STORAGE_BUCKET_NAME,
-            Key=context.team_id + "_" + user_id,
+            Key=bucket_key,
             Body=json.dumps(data)
         )
         return

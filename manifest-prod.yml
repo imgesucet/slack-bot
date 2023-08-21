@@ -35,6 +35,10 @@ features:
       description: Get your DB Connections
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /get_db_tables
+      description: Get your DB Connection Tables
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.defytrends.dev/slack/oauth_redirect
