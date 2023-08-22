@@ -40,6 +40,7 @@ from app.utils import redact_string, fetch_data_from_genieapi
 def just_ack(ack: Ack):
     ack()
 
+
 POST_GRES_DICT = {}
 
 TIMEOUT_ERROR_MESSAGE = (
@@ -57,8 +58,10 @@ URL_PATTERN_POSTGRES = re.compile(
     r'(?::\d+)?'  # optional port
     r'(?:/?|[/?]\S+)$', re.IGNORECASE)
 
+
 def is_valid_url(string):
     return bool(re.match(URL_PATTERN_POSTGRES, string))
+
 
 def extract_postgres_url(sentence):
     url_pattern = re.compile(
@@ -70,6 +73,7 @@ def extract_postgres_url(sentence):
     else:
         return None
 
+
 def extract_table(sentence):
     url_pattern = re.compile(
         r'table:\/\/[^\s\/$.?#].[^\s]*$', re.IGNORECASE)
@@ -80,11 +84,12 @@ def extract_table(sentence):
     else:
         return None
 
+
 def respond_to_app_mention(
-    context: BoltContext,
-    payload: dict,
-    client: WebClient,
-    logger: logging.Logger,
+        context: BoltContext,
+        payload: dict,
+        client: WebClient,
+        logger: logging.Logger,
 ):
     if payload.get("thread_ts") is not None:
         parent_message = find_parent_message(
@@ -129,10 +134,10 @@ def respond_to_app_mention(
                             else "user"
                         ),
                         "content": (
-                            f"<@{reply['user']}>: "
-                            + format_openai_message_content(
-                                reply_text, TRANSLATE_MARKDOWN
-                            )
+                                f"<@{reply['user']}>: "
+                                + format_openai_message_content(
+                            reply_text, TRANSLATE_MARKDOWN
+                        )
                         ),
                     }
                 )
@@ -144,7 +149,7 @@ def respond_to_app_mention(
                 {
                     "role": "user",
                     "content": f"<@{user_id}>: "
-                    + format_openai_message_content(msg_text, TRANSLATE_MARKDOWN),
+                               + format_openai_message_content(msg_text, TRANSLATE_MARKDOWN),
                 }
             )
 
@@ -201,17 +206,17 @@ def respond_to_app_mention(
     except Timeout:
         if wip_reply is not None:
             text = (
-                (
-                    wip_reply.get("message", {}).get("text", "")
-                    if wip_reply is not None
-                    else ""
-                )
-                + "\n\n"
-                + translate(
-                    openai_api_key=openai_api_key,
-                    context=context,
-                    text=TIMEOUT_ERROR_MESSAGE,
-                )
+                    (
+                        wip_reply.get("message", {}).get("text", "")
+                        if wip_reply is not None
+                        else ""
+                    )
+                    + "\n\n"
+                    + translate(
+                openai_api_key=openai_api_key,
+                context=context,
+                text=TIMEOUT_ERROR_MESSAGE,
+            )
             )
             client.chat_update(
                 channel=context.channel_id,
@@ -220,17 +225,17 @@ def respond_to_app_mention(
             )
     except Exception as e:
         text = (
-            (
-                wip_reply.get("message", {}).get("text", "")
-                if wip_reply is not None
-                else ""
-            )
-            + "\n\n"
-            + translate(
-                openai_api_key=openai_api_key,
-                context=context,
-                text=f":warning: Failed to start a conversation with ChatGPT: {e}",
-            )
+                (
+                    wip_reply.get("message", {}).get("text", "")
+                    if wip_reply is not None
+                    else ""
+                )
+                + "\n\n"
+                + translate(
+            openai_api_key=openai_api_key,
+            context=context,
+            text=f":warning: Failed to start a conversation with ChatGPT: {e}",
+        )
         )
         logger.exception(text, e)
         if wip_reply is not None:
@@ -242,10 +247,10 @@ def respond_to_app_mention(
 
 
 def respond_to_new_message(
-    context: BoltContext,
-    payload: dict,
-    client: WebClient,
-    logger: logging.Logger,
+        context: BoltContext,
+        payload: dict,
+        client: WebClient,
+        logger: logging.Logger,
 ):
     if payload.get("bot_id") is not None and payload.get("bot_id") != context.bot_id:
         # Skip a new message by a different app
@@ -265,7 +270,7 @@ def respond_to_new_message(
 
         for block in last_message['blocks']:
             if block['type'] == 'link':
-                print("\n BLOCK --- ",block)
+                print("\n BLOCK --- ", block)
                 logger.info(f"BLOCK --- {block}")
                 if is_valid_url(block['url']):
                     POST_GRES_URL = extract_postgres_url(block['url'])
@@ -384,7 +389,7 @@ def respond_to_new_message(
             messages.append(
                 {
                     "content": f"<@{msg_user_id}>: "
-                    + format_openai_message_content(reply_text, TRANSLATE_MARKDOWN),
+                               + format_openai_message_content(reply_text, TRANSLATE_MARKDOWN),
                     "role": "user",
                 }
             )
@@ -392,8 +397,13 @@ def respond_to_new_message(
         api_key = None
         table_name = context.get("db_table")
         db_url = context.get("db_url")
+        text_query = last_message["text"]
 
-        loading_text = fetch_data_from_genieapi(api_key, "/language_to_sql", last_message["text"], table_name, db_url)
+        logger.info(
+            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
+
+        loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
+                                                text_query=text_query, table_name=table_name, db_url=db_url)
 
         wip_reply = post_wip_message_with_attachment(
             client=client,
@@ -463,12 +473,12 @@ def respond_to_new_message(
     except Timeout:
         if wip_reply is not None:
             text = (
-                (
-                    wip_reply.get("message", {}).get("text", "")
-                    if wip_reply is not None
-                    else ""
-                )
-                + "\n\n"
+                    (
+                        wip_reply.get("message", {}).get("text", "")
+                        if wip_reply is not None
+                        else ""
+                    )
+                    + "\n\n"
                 # + translate(
                 #     openai_api_key=openai_api_key,
                 #     context=context,
@@ -482,13 +492,13 @@ def respond_to_new_message(
             )
     except Exception as e:
         text = (
-            (
-                wip_reply.get("message", {}).get("text", "")
-                if wip_reply is not None
-                else ""
-            )
-            + "\n\n"
-            + f":warning: Failed to reply: {e}"
+                (
+                    wip_reply.get("message", {}).get("text", "")
+                    if wip_reply is not None
+                    else ""
+                )
+                + "\n\n"
+                + f":warning: Failed to reply: {e}"
         )
         logger.exception(text, e)
         if wip_reply is not None:
@@ -511,15 +521,15 @@ MESSAGE_SUBTYPES_TO_SKIP = ["message_changed", "message_deleted"]
 # this before_authorize function skips message changed/deleted events.
 # Especially, "message_changed" events can be triggered many times when the app rapidly updates its reply.
 def before_authorize(
-    body: dict,
-    payload: dict,
-    logger: logging.Logger,
-    next_,
+        body: dict,
+        payload: dict,
+        logger: logging.Logger,
+        next_,
 ):
     if (
-        is_event(body)
-        and payload.get("type") == "message"
-        and payload.get("subtype") in MESSAGE_SUBTYPES_TO_SKIP
+            is_event(body)
+            and payload.get("type") == "message"
+            and payload.get("subtype") in MESSAGE_SUBTYPES_TO_SKIP
     ):
         logger.debug(
             "Skipped the following middleware and listeners "
