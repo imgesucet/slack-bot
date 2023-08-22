@@ -266,21 +266,7 @@ def respond_to_new_message(
             limit=1000,
         ).get("messages", [])
         last_message = messages_in_context[-1]
-        print(f"--- the last message is :{last_message} \n")
-
-        for block in last_message['blocks']:
-            if block['type'] == 'link':
-                print("\n BLOCK --- ", block)
-                logger.info(f"BLOCK --- {block}")
-                if is_valid_url(block['url']):
-                    POST_GRES_URL = extract_postgres_url(block['url'])
-                    if POST_GRES_URL is not None:
-                        print(f"User have set own POST_GRES_URL={POST_GRES_URL}")
-                if POST_GRES_URL is not None and context.user_id not in POST_GRES_DICT:
-                    POST_GRES_DICT[context.user_id] = POST_GRES_URL
-                    print(f"User previously already set own POST_GRES_URL={POST_GRES_URL}")
-            else:
-                continue
+        # print(f"--- the last message is :{last_message} \n")
 
         is_in_dm_with_bot = payload.get("channel_type") == "im"
         is_no_mention_required = False

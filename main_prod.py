@@ -352,19 +352,19 @@ def handle_set_key(ack, body, command, respond, context: BoltContext, logger: lo
     else:
         respond(text="You must provide an API key after /set_key asd123")
 
-    @app.command("/use_db")
-    def handle_use_db(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
-        # Acknowledge command request
-        ack()
+@app.command("/use_db")
+def handle_use_db(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+    # Acknowledge command request
+    ack()
 
-        value = command['text']
-        logger.info(f"use_db!!!, value={value}")
+    value = command['text']
+    logger.info(f"use_db!!!, value={value}")
 
-        if value:
-            save_s3("db_url", value, logger, context)
-            respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
-        else:
-            respond(text="You must provide the DB alias after. eg /use_db bold-sky")
+    if value:
+        save_s3("db_url", value, logger, context)
+        respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
+    else:
+        respond(text="You must provide the DB alias after. eg /use_db bold-sky")
 
 def save_s3(
         key: str,
