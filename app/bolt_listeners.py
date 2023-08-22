@@ -168,41 +168,41 @@ def respond_to_app_mention(
             user=context.user_id,
         )
 
-        (
-            messages,
-            num_context_tokens,
-            max_context_tokens,
-        ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
-        num_messages = len([msg for msg in messages if msg.get("role") != "system"])
-        if num_messages == 0:
-            update_wip_message(
-                client=client,
-                channel=context.channel_id,
-                ts=wip_reply["message"]["ts"],
-                text=f":warning: The previous message is too long ({num_context_tokens}/{max_context_tokens} prompt tokens).",
-                messages=messages,
-                user=context.user_id,
-            )
-        else:
-            api_key = None
-            table_name = context.get("db_table")
-            db_url = context.get("db_url")
-            text_query = last_message
+        # (
+        #     messages,
+        #     num_context_tokens,
+        #     max_context_tokens,
+        # ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
+        # num_messages = len([msg for msg in messages if msg.get("role") != "system"])
+        # if num_messages == 0:
+        #     update_wip_message(
+        #         client=client,
+        #         channel=context.channel_id,
+        #         ts=wip_reply["message"]["ts"],
+        #         text=f":warning: The previous message is too long ({num_context_tokens}/{max_context_tokens} prompt tokens).",
+        #         messages=messages,
+        #         user=context.user_id,
+        #     )
+        # else:
+        api_key = None
+        table_name = context.get("db_table")
+        db_url = context.get("db_url")
+        text_query = last_message
 
-            logger.info(
-                f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
+        logger.info(
+            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
 
-            loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                    text_query=text_query, table_name=table_name, db_url=db_url)
+        loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
+                                                text_query=text_query, table_name=table_name, db_url=db_url)
 
-            wip_reply = post_wip_message_with_attachment(
-                client=client,
-                channel=context.channel_id,
-                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-                loading_text=loading_text,
-                messages=messages,
-                user=user_id,
-            )
+        wip_reply = post_wip_message_with_attachment(
+            client=client,
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            loading_text=loading_text,
+            messages=messages,
+            user=user_id,
+        )
 
     except Timeout:
         if wip_reply is not None:
