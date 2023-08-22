@@ -423,17 +423,6 @@ def render_home_tab(client: WebClient, context: BoltContext, logger: logging.Log
     except:  # noqa: E722
         pass
 
-    # openai_api_key = context.get("OPENAI_API_KEY")
-    # if openai_api_key is not None:
-        # message = translate(
-        #     openai_api_key=openai_api_key, context=context, text=message
-        # )
-        # configure_label = translate(
-        #     openai_api_key=openai_api_key,
-        #     context=context,
-        #     text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
-        # )
-
     client.views_publish(
         user_id=context.user_id,
         view=build_home_tab(message, configure_label),

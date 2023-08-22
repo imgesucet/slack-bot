@@ -91,6 +91,7 @@ def respond_to_app_mention(
         client: WebClient,
         logger: logging.Logger,
 ):
+    last_message = None
     if payload.get("thread_ts") is not None:
         parent_message = find_parent_message(
             client, context.channel_id, payload.get("thread_ts")
@@ -105,9 +106,9 @@ def respond_to_app_mention(
     system_text = build_system_text(SYSTEM_TEXT, TRANSLATE_MARKDOWN, context)
     messages = [{"role": "system", "content": system_text}]
 
-    openai_api_key = context.get("OPENAI_API_KEY")
+    api_key = context.get("api_key")
     try:
-        if openai_api_key is None:
+        if api_key is None:
             client.chat_postMessage(
                 channel=context.channel_id,
                 text="To use this app, please configure your Genie API key first",
@@ -141,6 +142,8 @@ def respond_to_app_mention(
                         ),
                     }
                 )
+                last_message = reply_text
+
         else:
             # Strip bot Slack user ID from initial message
             msg_text = re.sub(f"<@{context.bot_user_id}>\\s*", "", payload["text"])
@@ -152,15 +155,15 @@ def respond_to_app_mention(
                                + format_openai_message_content(msg_text, TRANSLATE_MARKDOWN),
                 }
             )
+            last_message = msg_text
 
-        loading_text = translate(
-            openai_api_key=openai_api_key, context=context, text=DEFAULT_LOADING_TEXT
-        )
+        is_in_dm_with_bot = payload.get("channel_type") == "im"
+
         wip_reply = post_wip_message(
             client=client,
             channel=context.channel_id,
             thread_ts=payload["ts"],
-            loading_text=loading_text,
+            loading_text=DEFAULT_LOADING_TEXT,
             messages=messages,
             user=context.user_id,
         )
@@ -181,26 +184,24 @@ def respond_to_app_mention(
                 user=context.user_id,
             )
         else:
-            stream = start_receiving_openai_response(
-                openai_api_key=openai_api_key,
-                model=context["OPENAI_MODEL"],
-                temperature=context["OPENAI_TEMPERATURE"],
-                messages=messages,
-                user=context.user_id,
-                openai_api_type=context["OPENAI_API_TYPE"],
-                openai_api_base=context["OPENAI_API_BASE"],
-                openai_api_version=context["OPENAI_API_VERSION"],
-                openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
-            )
-            consume_openai_stream_to_write_reply(
+            api_key = None
+            table_name = context.get("db_table")
+            db_url = context.get("db_url")
+            text_query = last_message
+
+            logger.info(
+                f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
+
+            loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
+                                                    text_query=text_query, table_name=table_name, db_url=db_url)
+
+            wip_reply = post_wip_message_with_attachment(
                 client=client,
-                wip_reply=wip_reply,
-                context=context,
-                user_id=user_id,
+                channel=context.channel_id,
+                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+                loading_text=loading_text,
                 messages=messages,
-                stream=stream,
-                timeout_seconds=OPENAI_TIMEOUT_SECONDS,
-                translate_markdown=TRANSLATE_MARKDOWN,
+                user=user_id,
             )
 
     except Timeout:
@@ -211,12 +212,6 @@ def respond_to_app_mention(
                         if wip_reply is not None
                         else ""
                     )
-                    + "\n\n"
-                    + translate(
-                openai_api_key=openai_api_key,
-                context=context,
-                text=TIMEOUT_ERROR_MESSAGE,
-            )
             )
             client.chat_update(
                 channel=context.channel_id,
@@ -230,12 +225,6 @@ def respond_to_app_mention(
                     if wip_reply is not None
                     else ""
                 )
-                + "\n\n"
-                + translate(
-            openai_api_key=openai_api_key,
-            context=context,
-            text=f":warning: Failed to start a conversation with ChatGPT: {e}",
-        )
         )
         logger.exception(text, e)
         if wip_reply is not None:
@@ -400,62 +389,6 @@ def respond_to_new_message(
             user=user_id,
         )
 
-        # (
-        #     messages,
-        #     num_context_tokens,
-        #     max_context_tokens,
-        # ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
-        # num_messages = len([msg for msg in messages if msg.get("role") != "system"])
-        # if num_messages == 0:
-        #     update_wip_message(
-        #         client=client,
-        #         channel=context.channel_id,
-        #         ts=wip_reply["message"]["ts"],
-        #         text=f":warning: The previous message is too long ({num_context_tokens}/{max_context_tokens} prompt tokens).",
-        #         messages=messages,
-        #         user=context.user_id,
-        #     )
-        # else:
-        #     stream = start_receiving_openai_response(
-        #         openai_api_key=openai_api_key,
-        #         model=context["OPENAI_MODEL"],
-        #         temperature=context["OPENAI_TEMPERATURE"],
-        #         messages=messages,
-        #         user=user_id,
-        #         openai_api_type=context["OPENAI_API_TYPE"],
-        #         openai_api_base=context["OPENAI_API_BASE"],
-        #         openai_api_version=context["OPENAI_API_VERSION"],
-        #         openai_deployment_id=context["OPENAI_DEPLOYMENT_ID"],
-        #     )
-        #
-        #     latest_replies = client.conversations_replies(
-        #         channel=context.channel_id,
-        #         ts=wip_reply.get("ts"),
-        #         include_all_metadata=True,
-        #         limit=1000,
-        #     )
-        #     if (
-        #         latest_replies.get("messages", [])[-1]["ts"]
-        #         != wip_reply["message"]["ts"]
-        #     ):
-        #         # Since a new reply will come soon, this app abandons this reply
-        #         client.chat_delete(
-        #             channel=context.channel_id,
-        #             ts=wip_reply["message"]["ts"],
-        #         )
-        #         return
-        #
-        #     consume_openai_stream_to_write_reply(
-        #         client=client,
-        #         wip_reply=wip_reply,
-        #         context=context,
-        #         user_id=user_id,
-        #         messages=messages,
-        #         stream=stream,
-        #         timeout_seconds=OPENAI_TIMEOUT_SECONDS,
-        #         translate_markdown=TRANSLATE_MARKDOWN,
-        #     )
-
     except Timeout:
         if wip_reply is not None:
             text = (
@@ -464,12 +397,6 @@ def respond_to_new_message(
                         if wip_reply is not None
                         else ""
                     )
-                    + "\n\n"
-                # + translate(
-                #     openai_api_key=openai_api_key,
-                #     context=context,
-                #     text=TIMEOUT_ERROR_MESSAGE,
-                # )
             )
             client.chat_update(
                 channel=context.channel_id,
