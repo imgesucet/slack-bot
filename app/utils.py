@@ -38,17 +38,16 @@ def redact_string(input_string: str) -> str:
     return output_string
 
 
-
 def fetch_data_from_genieapi(api_key=None, endpoint="/language_to_sql", text_query=None, table_name=None, db_url=None):
     # Set defaults
     API_KEY_DEFAULT = os.environ.get("API_KEY", "")
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
 
-
     PARAMS_DEFAULT = {
         "text_query": text_query,
         "table_name": table_name,
-        "execute_sql": True
+        "execute_sql": True,
+        "is_generate_code": True
     }
 
     # Use arguments if provided, otherwise default
@@ -88,13 +87,10 @@ def fetch_data_from_genieapi(api_key=None, endpoint="/language_to_sql", text_que
     raise Exception("Max retries reached without a successful response")
 
 
-
-
 def post_data_to_genieapi(api_key=None, endpoint=None, params=None, post_body=None):
     # Set defaults
     API_KEY_DEFAULT = os.environ.get("API_KEY", "")
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
-
 
     # PARAMS_DEFAULT = {
     #     "text_query": text_query,
@@ -135,19 +131,19 @@ def post_data_to_genieapi(api_key=None, endpoint=None, params=None, post_body=No
     raise Exception("Max retries reached without a successful response")
 
 
-
 # Word lists, for the sake of this example we're using simple lists
 # but you can expand them or use some cool/adjective word lists
 ADJECTIVES = ["mystic", "silent", "bold", "ancient", "bright", "daring", "brave"]
 NOUNS = ["river", "mountain", "forest", "sky", "ocean", "star", "cloud"]
+
 
 def cool_name_generator(input_string):
     # Create an MD5 hash of the input
     hashed = hashlib.md5(input_string.encode()).hexdigest()
 
     # Convert some characters of the hash into integers for indexing
-    adj_index = int(hashed[:2], 16) % len(ADJECTIVES)   # taking the first 2 characters
-    noun_index = int(hashed[2:4], 16) % len(NOUNS)     # taking the next 2 characters
+    adj_index = int(hashed[:2], 16) % len(ADJECTIVES)  # taking the first 2 characters
+    noun_index = int(hashed[2:4], 16) % len(NOUNS)  # taking the next 2 characters
 
     # Use the indices to pick words from the lists
     name = f"{ADJECTIVES[adj_index]}-{NOUNS[noun_index]}"

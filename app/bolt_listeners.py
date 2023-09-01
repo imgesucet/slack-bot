@@ -207,11 +207,9 @@ def respond_to_app_mention(
     except Timeout:
         if wip_reply is not None:
             text = (
-                    (
-                        wip_reply.get("message", {}).get("text", "")
-                        if wip_reply is not None
-                        else ""
-                    )
+                wip_reply.get("message", {}).get("text", "")
+                if wip_reply is not None
+                else ""
             )
             client.chat_update(
                 channel=context.channel_id,
@@ -220,11 +218,9 @@ def respond_to_app_mention(
             )
     except Exception as e:
         text = (
-                (
-                    wip_reply.get("message", {}).get("text", "")
-                    if wip_reply is not None
-                    else ""
-                )
+            wip_reply.get("message", {}).get("text", "")
+            if wip_reply is not None
+            else ""
         )
         logger.exception(text, e)
         if wip_reply is not None:
@@ -392,11 +388,11 @@ def respond_to_new_message(
     except Timeout:
         if wip_reply is not None:
             text = (
-                    (
-                        wip_reply.get("message", {}).get("text", "")
-                        if wip_reply is not None
-                        else ""
-                    )
+                (
+                    wip_reply.get("message", {}).get("text", "")
+                    if wip_reply is not None
+                    else ""
+                )
             )
             client.chat_update(
                 channel=context.channel_id,
