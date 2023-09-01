@@ -7,13 +7,14 @@ from typing import List, Dict
 from slack_sdk.web import WebClient, SlackResponse
 from slack_bolt import BoltContext
 
+
 # ----------------------------
 # General operations in a channel
 # ----------------------------
 
 
 def find_parent_message(
-    client: WebClient, channel_id: Optional[str], thread_ts: Optional[str]
+        client: WebClient, channel_id: Optional[str], thread_ts: Optional[str]
 ) -> Optional[dict]:
     if channel_id is None or thread_ts is None:
         return None
@@ -39,13 +40,13 @@ def is_no_mention_thread(context: BoltContext, parent_message: dict) -> bool:
 
 
 def post_wip_message(
-    *,
-    client: WebClient,
-    channel: str,
-    thread_ts: str,
-    loading_text: str,
-    messages: List[Dict[str, str]],
-    user: str,
+        *,
+        client: WebClient,
+        channel: str,
+        thread_ts: str,
+        loading_text: str,
+        messages: List[Dict[str, str]],
+        user: str,
 ) -> SlackResponse:
     system_messages = [msg for msg in messages if msg["role"] == "system"]
     return client.chat_postMessage(
@@ -58,14 +59,15 @@ def post_wip_message(
         },
     )
 
+
 def post_wip_message_with_attachment(
-    *,
-    client: WebClient,
-    channel: str,
-    thread_ts: str,
-    loading_text: list,
-    messages: List[Dict[str, str]],
-    user: str,
+        *,
+        client: WebClient,
+        channel: str,
+        thread_ts: str,
+        loading_text: list,
+        messages: List[Dict[str, str]],
+        user: str,
 ) -> SlackResponse:
     try:
         sql = loading_text.get("sql_query", None)
@@ -73,8 +75,11 @@ def post_wip_message_with_attachment(
         sql = None
 
     json_obj = loading_text["result"]
-    base64_encoded_chart_image = loading_text["base64_encoded_chart_image"]
-    print(f"post_wip_message_with_attachment, base64_encoded_chart_image={base64_encoded_chart_image}")
+    try:
+        base64_encoded_chart_image = loading_text["base64_encoded_chart_image"]
+        print(f"post_wip_message_with_attachment, base64_encoded_chart_image={base64_encoded_chart_image}")
+    except KeyError:
+        base64_encoded_chart_image = None
 
     table = json_to_slack_table(json_obj)
 
@@ -92,11 +97,13 @@ def post_wip_message_with_attachment(
     file_size_txt = os.path.getsize('data.txt')
     print(f"post_wip_message_with_attachment, file_size_txt={file_size_txt} bytes")
 
-    with open('data.png', 'wb') as file:
-        file.write(base64.b64decode(base64_encoded_chart_image))
-
-    file_size_png = os.path.getsize('data.png')
-    print(f"post_wip_message_with_attachment, file_size_png={file_size_png} bytes")
+    if base64_encoded_chart_image is not None:
+        with open('data.png', 'wb') as file:
+            file.write(base64.b64decode(base64_encoded_chart_image))
+            file_size_png = os.path.getsize('data.png')
+            print(f"post_wip_message_with_attachment, file_size_png={file_size_png} bytes")
+    else:
+        file_size_png = 0
 
     system_messages = [msg for msg in messages if msg["role"] == "system"]
 
@@ -175,14 +182,13 @@ def json_to_slack_table(json_array):
     return table_string
 
 
-
 def update_wip_message(
-    client: WebClient,
-    channel: str,
-    ts: str,
-    text: str,
-    messages: List[Dict[str, str]],
-    user: str,
+        client: WebClient,
+        channel: str,
+        ts: str,
+        text: str,
+        messages: List[Dict[str, str]],
+        user: str,
 ) -> SlackResponse:
     system_messages = [msg for msg in messages if msg["role"] == "system"]
     return client.chat_update(
