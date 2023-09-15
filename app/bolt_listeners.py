@@ -374,7 +374,7 @@ def respond_to_new_message(
             f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
 
         loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                text_query=text_query, table_name=table_name, db_url=db_url)
+                                                text_query=text_query, table_name=table_name, resourcename=db_url)
 
         wip_reply = post_wip_message_with_attachment(
             client=client,

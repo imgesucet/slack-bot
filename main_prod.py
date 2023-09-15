@@ -232,6 +232,7 @@ def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logg
     logger.info(f"get_db_tables!!!")
 
     api_key = context["api_key"]
+    value = command['text']
     is_in_dm_with_bot = True
     messages = []
     user_id = context.actor_user_id or context.user_id
@@ -246,7 +247,7 @@ def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logg
     )
 
     try:
-        loading_text = fetch_data_from_genieapi(api_key, "/list/user/database_connection/tables")
+        loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection/tables", resourcename=value)
         post_wip_message_with_attachment(
             client=client,
             channel=context.channel_id,
@@ -277,10 +278,11 @@ def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger:
     if value:
         # save_s3("db_url", value, logger, context)
         api_key = context["api_key"]
+        db_type = context["db_type"]
         try:
             resource_name = cool_name_generator(value)
             post_data_to_genieapi(api_key, "/update/user/database_connection", None,
-                                  {"connection_string_url": value, "resourcename": resource_name})
+                                  {"connection_string_url": value, "resourcename": resource_name, "db_type": db_type})
 
             save_s3("db_url", resource_name, logger, context)
             respond(text=f"DB URL set to: {redact_string(resource_name)}")  # Respond to the command
