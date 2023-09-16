@@ -168,7 +168,6 @@ def set_s3_openai_api_key(context: BoltContext, next_, logger: logging.Logger):
 
                 context["OPENAI_API_KEY"] = config.get("api_key")
 
-                context["api_key"] = config.get("api_key")
                 context["OPENAI_MODEL"] = config.get("model")
                 context["OPENAI_TEMPERATURE"] = config.get(
                     "temperature", DEFAULT_OPENAI_TEMPERATURE
@@ -188,9 +187,10 @@ def set_s3_openai_api_key(context: BoltContext, next_, logger: logging.Logger):
                 config = json.loads(config_str)
                 logger.info(f"set_s3_openai_api_key, team_id+user_id, config={config}")
 
-                context["db_type"] = config.get("db_type")
-                context["db_url"] = config.get("db_url")
                 context["db_table"] = config.get("db_table")
+                context["db_url"] = config.get("db_url")
+                context["db_type"] = config.get("db_type")
+                context["api_key"] = config.get("api_key")
 
             else:
                 # The legacy data format
@@ -368,6 +368,7 @@ def handle_use_db(ack, body, command, respond, context: BoltContext, logger: log
     else:
         respond(text="You must provide the DB alias after. eg /use_db bold-sky")
 
+
 def save_s3(
         key: str,
         value: str,
@@ -375,7 +376,10 @@ def save_s3(
         context: BoltContext,
 ):
     user_id = context.actor_user_id or context.user_id
-    if key == "db_table" or key == "db_url" or key == "db_type":
+    if key == "db_table" \
+            or key == "db_url" \
+            or key == "db_type" \
+            or key == "api_key":
         bucket_key = context.team_id + "_" + user_id
     else:
         bucket_key = context.team_id

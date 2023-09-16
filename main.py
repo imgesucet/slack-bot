@@ -133,10 +133,10 @@ if __name__ == "__main__":
                     config = json.loads(config_str)
                     logger.info(f"set_s3_openai_api_key, team_id+user_id, config={config}")
 
-                    context["db_type"] = config.get("db_type")
-                    context["db_url"] = config.get("db_url")
                     context["db_table"] = config.get("db_table")
-
+                    context["db_url"] = config.get("db_url")
+                    context["db_type"] = config.get("db_type")
+                    context["api_key"] = config.get("api_key")
                 else:
                     # The legacy data format
                     context["OPENAI_API_KEY"] = config_str
