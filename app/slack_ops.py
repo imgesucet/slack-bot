@@ -1,4 +1,5 @@
 import base64
+import io
 import json
 import os
 from typing import Optional
@@ -85,25 +86,21 @@ def post_wip_message_with_attachment(
 
     data_string = json.dumps(json_obj, indent=4)  # 'your_data' is your JSON data
 
-    with open('data.json', 'w') as file:
-        file.write(data_string)
+    file_json = io.BytesIO(data_string.encode('utf-8')).getvalue()
+    file_json_size = len(file_json)
+    print(f"post_wip_message_with_attachment, file_json_size={file_json_size} bytes")
 
-    file_size_json = os.path.getsize('data.json')
-    print(f"post_wip_message_with_attachment, file_size_json={file_size_json} bytes")
-
-    with open('data.txt', 'w') as file:
-        file.write(table)
-
-    file_size_txt = os.path.getsize('data.txt')
-    print(f"post_wip_message_with_attachment, file_size_txt={file_size_txt} bytes")
+    file_txt = io.BytesIO(table.encode('utf-8')).getvalue()
+    file_txt_size = len(file_txt)
+    print(f"post_wip_message_with_attachment, file_txt_size={file_txt_size} bytes")
 
     if base64_encoded_chart_image is not None:
-        with open('data.png', 'wb') as file:
-            file.write(base64.b64decode(base64_encoded_chart_image))
-            file_size_png = os.path.getsize('data.png')
-            print(f"post_wip_message_with_attachment, file_size_png={file_size_png} bytes")
+        file_png = io.BytesIO(base64.b64decode(base64_encoded_chart_image)).getvalue()
+        file_png_size = len(file_png)
+        print(f"post_wip_message_with_attachment, file_png_size={file_png_size} bytes")
     else:
-        file_size_png = 0
+        file_png_size = 0
+        file_png = None
 
     system_messages = [msg for msg in messages if msg["role"] == "system"]
 
@@ -118,7 +115,7 @@ def post_wip_message_with_attachment(
             },
         )
 
-    if file_size_json > 0:
+    if file_json_size > 0:
         client.files_upload_v2(
             channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
             thread_ts=thread_ts,
@@ -126,12 +123,12 @@ def post_wip_message_with_attachment(
                 "event_type": "chat-gpt-convo",
                 "event_payload": {"messages": system_messages, "user": user},
             },
-            file="data.json",  # the path to your file
+            content=file_json,
             filename="data.json"  # the filename that will be displayed in Slack
         )
         print(f"post_wip_message_with_attachment, data.json, done")
 
-    if file_size_txt > 0:
+    if file_txt_size > 0:
         client.files_upload_v2(
             channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
             thread_ts=thread_ts,
@@ -139,12 +136,12 @@ def post_wip_message_with_attachment(
                 "event_type": "chat-gpt-convo",
                 "event_payload": {"messages": system_messages, "user": user},
             },
-            file="data.txt",  # the path to your file
+            content=file_txt,
             filename="data.txt"  # the filename that will be displayed in Slack
         )
         print(f"post_wip_message_with_attachment, data.txt, done")
 
-    if file_size_png > 0:
+    if file_png_size > 0:
         client.files_upload_v2(
             channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
             thread_ts=thread_ts,
@@ -152,7 +149,7 @@ def post_wip_message_with_attachment(
                 "event_type": "chat-gpt-convo",
                 "event_payload": {"messages": system_messages, "user": user},
             },
-            file="data.png",  # the path to your file
+            content=file_png,
             filename="data.png"  # the filename that will be displayed in Slack
         )
     print(f"post_wip_message_with_attachment, data.png, done")

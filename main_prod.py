@@ -245,7 +245,8 @@ def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logg
     user_id = context.actor_user_id or context.user_id
 
     try:
-        loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection/tables",
+        loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                endpoint="/list/user/database_connection/tables",
                                                 resourcename=value)
         post_wip_message_with_attachment(
             client=client,
