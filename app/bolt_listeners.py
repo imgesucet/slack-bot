@@ -29,7 +29,7 @@ from app.slack_ops import (
     update_wip_message, post_wip_message_with_attachment,
 )
 
-from app.utils import redact_string, fetch_data_from_genieapi
+from app.utils import redact_string, fetch_data_from_genieapi, DEFAULT_LOADING_TEXT
 
 
 #
@@ -47,7 +47,7 @@ TIMEOUT_ERROR_MESSAGE = (
     f":warning: Sorry! It looks like Genie didn't respond within {OPENAI_TIMEOUT_SECONDS} seconds. "
     "Please try again later. :bow:"
 )
-DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
+
 
 URL_PATTERN_POSTGRES = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://
@@ -399,15 +399,7 @@ def respond_to_new_message(
                 text=text,
             )
     except Exception as e:
-        text = (
-                (
-                    wip_reply.get("message", {}).get("text", "")
-                    if wip_reply is not None
-                    else ""
-                )
-                + "\n\n"
-                + f":warning: Failed to reply: {e}"
-        )
+        text = f":warning: Failed to process your request: {e}"
         logger.exception(text, e)
         if wip_reply is not None:
             client.chat_update(

@@ -160,6 +160,7 @@ if __name__ == "__main__":
 
         value = command['text']
         logger.info(f"set_db_table!!!, value={value}")
+        respond(text=DEFAULT_LOADING_TEXT)
 
         if value:
             save_s3("db_table", value, logger, context)
@@ -175,24 +176,25 @@ if __name__ == "__main__":
         ack()
 
         logger.info(f"get_db_tables!!!")
+        respond(text=DEFAULT_LOADING_TEXT)
 
         api_key = context["api_key"]
+        db_url = context["db_url"]
         value = command['text']
+
+        if value == "":
+            value = db_url
+
+        if value is None or value == "":
+            return respond(text=f"Get DB Tables requires one argument.")  # Respond to the command
+
         is_in_dm_with_bot = True
         messages = []
         user_id = context.actor_user_id or context.user_id
 
-        wip_reply = post_wip_message(
-            client=client,
-            channel=context.channel_id,
-            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            loading_text=DEFAULT_LOADING_TEXT,
-            messages=messages,
-            user=user_id,
-        )
-
         try:
-            loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection/tables",
+            loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                    endpoint="/list/user/database_connection/tables",
                                                     resourcename=value)
             post_wip_message_with_attachment(
                 client=client,
@@ -201,11 +203,6 @@ if __name__ == "__main__":
                 loading_text=loading_text,
                 messages=messages,
                 user=user_id,
-            )
-
-            client.chat_delete(
-                channel=context.channel_id,
-                ts=wip_reply["message"]["ts"],
             )
 
         except Exception as e:
@@ -220,6 +217,7 @@ if __name__ == "__main__":
 
         value = command['text']
         logger.info(f"set_db_url!!!, value={value}")
+        respond(text=DEFAULT_LOADING_TEXT)
 
         if value:
             # save_s3("db_url", value, logger, context)
@@ -249,6 +247,7 @@ if __name__ == "__main__":
         ack()
 
         logger.info(f"get_db_urls!!!")
+        respond(text=DEFAULT_LOADING_TEXT)
 
         api_key = context["api_key"]
         try:
@@ -279,6 +278,7 @@ if __name__ == "__main__":
 
         value = command['text']
         logger.info(f"set_db_type!!!, value={value}")
+        respond(text=DEFAULT_LOADING_TEXT)
 
         if value:
             save_s3("db_type", value, logger, context)
@@ -309,6 +309,7 @@ if __name__ == "__main__":
 
         value = command['text']
         logger.info(f"use_db!!!, value={value}")
+        respond(text=DEFAULT_LOADING_TEXT)
 
         if value:
             save_s3("db_url", value, logger, context)

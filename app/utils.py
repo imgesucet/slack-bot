@@ -14,6 +14,7 @@ from app.env import (
 )
 import requests
 
+DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
 
 def redact_string(input_string: str) -> str:
     """
@@ -40,7 +41,6 @@ def redact_string(input_string: str) -> str:
 
 def fetch_data_from_genieapi(api_key=None, endpoint="/language_to_sql", text_query=None, table_name=None, resourcename=None):
     # Set defaults
-    API_KEY_DEFAULT = os.environ.get("API_KEY", "")
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
 
     PARAMS_DEFAULT = {
@@ -51,8 +51,7 @@ def fetch_data_from_genieapi(api_key=None, endpoint="/language_to_sql", text_que
     }
 
     # Use arguments if provided, otherwise default
-    api_key = api_key if api_key is not None else API_KEY_DEFAULT
-
+    print(f"fetch_data_from_genieapi, api_key={api_key}, endpoint={endpoint}, text_query={text_query}, table_name={table_name}, resourcename={resourcename}")
     endpoint_url = URL_DEFAULT + endpoint
     if resourcename is not None:
         # endpoint_url = endpoint_url + f"?resourcename={db_url}"
