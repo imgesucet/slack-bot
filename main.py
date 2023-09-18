@@ -1,3 +1,4 @@
+import io
 import json
 import logging
 import os
@@ -154,7 +155,8 @@ if __name__ == "__main__":
 
 
     @app.command("/dset_db_table")
-    def handle_set_db_table(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+    def handle_set_db_table(ack, body, command, respond, context: BoltContext, logger: logging.Logger,
+                            client: WebClient, payload: dict):
         # Acknowledge command request
         ack()
 
@@ -165,6 +167,36 @@ if __name__ == "__main__":
         if value:
             save_s3("db_table", value, logger, context)
             respond(text=f"DB Table set to: {value}")  # Respond to the command
+            try:
+                api_key = context["api_key"]
+                db_url = context["db_url"]
+                table_name = value
+                text_query = f"get 10 sample rows for {table_name}"
+                loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                        endpoint="/language_to_sql",
+                                                        text_query=text_query,
+                                                        table_name=table_name,
+                                                        resourcename=db_url,
+                                                        is_generate_code=False,
+                                                        )
+
+                is_in_dm_with_bot = True
+                messages = []
+                user_id = context.actor_user_id or context.user_id
+
+                # Use the built-in WebClient to upload the file
+                post_wip_message_with_attachment(
+                    client=client,
+                    channel=context.channel_id,
+                    thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+                    loading_text=loading_text,
+                    messages=messages,
+                    user=user_id,
+                )
+
+            except Exception as e:
+                logger.exception(e)
+                return respond(text=f"Failed to get DB tables")  # Respond to the command
         else:
             respond(text="You must provide the DB Table after. eg /set_db_table tvl")
 

@@ -39,7 +39,7 @@ def redact_string(input_string: str) -> str:
     return output_string
 
 
-def fetch_data_from_genieapi(api_key=None, endpoint="/language_to_sql", text_query=None, table_name=None, resourcename=None):
+def fetch_data_from_genieapi(api_key=None, endpoint="/language_to_sql", text_query=None, table_name=None, resourcename=None, is_generate_code=None):
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
 
@@ -54,8 +54,10 @@ def fetch_data_from_genieapi(api_key=None, endpoint="/language_to_sql", text_que
     print(f"fetch_data_from_genieapi, api_key={api_key}, endpoint={endpoint}, text_query={text_query}, table_name={table_name}, resourcename={resourcename}")
     endpoint_url = URL_DEFAULT + endpoint
     if resourcename is not None:
-        # endpoint_url = endpoint_url + f"?resourcename={db_url}"
         PARAMS_DEFAULT["resourcename"] = resourcename
+
+    if is_generate_code is not None:
+        PARAMS_DEFAULT["is_generate_code"] = is_generate_code
 
     headers = {"X-API-Key": api_key}
 
