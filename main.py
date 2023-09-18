@@ -78,23 +78,26 @@ if __name__ == "__main__":
 
 
     @app.event("app_home_opened")
-    def render_home_tab(client: WebClient, context: BoltContext):
-        already_set_api_key = os.environ["OPENAI_API_KEY"]
-        text = translate(
-            openai_api_key=already_set_api_key,
-            context=context,
-            text=DEFAULT_HOME_TAB_MESSAGE,
-        )
-        configure_label = translate(
-            openai_api_key=already_set_api_key,
-            context=context,
-            text=DEFAULT_HOME_TAB_CONFIGURE_LABEL,
-        )
+    def render_home_tab(client: WebClient, context: BoltContext, logger: logging.Logger):
+        logger.info("render_home_tab, init")
+
+        message = DEFAULT_HOME_TAB_MESSAGE
+        configure_label = DEFAULT_HOME_TAB_CONFIGURE_LABEL
+        try:
+            response = s3_client.get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
+            body = response['Body'].read().decode('utf-8')
+            data = json.loads(body)
+            if data["api_key"] is not None:
+                message = "This app is ready to use in this workspace :raised_hands:"
+            else:
+                message = "This app is NOT ready to use in this workspace. Please configure it."
+        except:  # noqa: E722
+            pass
+
         client.views_publish(
             user_id=context.user_id,
-            view=build_home_tab(text, configure_label),
+            view=build_home_tab(message, configure_label),
         )
-
 
 
     @app.middleware
@@ -110,8 +113,6 @@ if __name__ == "__main__":
                 if config_str.startswith("{"):
                     config = json.loads(config_str)
                     logger.info(f"set_s3_openai_api_key, team_id, config={config}")
-
-                    context["OPENAI_API_KEY"] = config.get("api_key")
 
                     context["api_key"] = config.get("api_key")
                     context["OPENAI_MODEL"] = config.get("model")
@@ -136,10 +137,8 @@ if __name__ == "__main__":
                     context["db_table"] = config.get("db_table")
                     context["db_url"] = config.get("db_url")
                     context["db_type"] = config.get("db_type")
-                    context["api_key"] = config.get("api_key")
                 else:
                     # The legacy data format
-                    context["OPENAI_API_KEY"] = config_str
                     context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
                     context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
             except s3_client.exceptions.NoSuchKey as e:
@@ -150,7 +149,7 @@ if __name__ == "__main__":
             context["OPENAI_API_VERSION"] = DEFAULT_OPENAI_API_VERSION
             context["OPENAI_DEPLOYMENT_ID"] = DEFAULT_OPENAI_DEPLOYMENT_ID
         except:  # noqa: E722
-            context["OPENAI_API_KEY"] = None
+            context["api_key"] = None
         next_()
 
 
@@ -167,6 +166,7 @@ if __name__ == "__main__":
             respond(text=f"DB Table set to: {value}")  # Respond to the command
         else:
             respond(text="You must provide the DB Table after. eg /set_db_table tvl")
+
 
     @app.command("/dget_db_tables")
     def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logger: logging.Logger,
@@ -192,7 +192,8 @@ if __name__ == "__main__":
         )
 
         try:
-            loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection/tables", resourcename=value)
+            loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection/tables",
+                                                    resourcename=value)
             post_wip_message_with_attachment(
                 client=client,
                 channel=context.channel_id,
@@ -211,6 +212,7 @@ if __name__ == "__main__":
             logger.exception(e)
             return respond(text=f"Failed to get DB tables")  # Respond to the command
 
+
     @app.command("/dset_db_url")
     def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
@@ -226,7 +228,8 @@ if __name__ == "__main__":
             try:
                 resource_name = cool_name_generator(value)
                 post_data_to_genieapi(api_key, "/update/user/database_connection", None,
-                                      {"connection_string_url": value, "resourcename": resource_name, "db_type": db_type})
+                                      {"connection_string_url": value, "resourcename": resource_name,
+                                       "db_type": db_type})
 
                 save_s3("db_url", resource_name, logger, context)
                 respond(text=f"DB URL set to: {redact_string(resource_name)}")  # Respond to the command
@@ -238,6 +241,7 @@ if __name__ == "__main__":
         else:
             respond(
                 text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
+
 
     @app.command("/dget_db_urls")
     def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
@@ -266,6 +270,7 @@ if __name__ == "__main__":
         except Exception as e:
             logger.exception(e)
             return respond(text=f"Failed to get DB URLs")  # Respond to the command
+
 
     @app.command("/dset_db_type")
     def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
@@ -296,6 +301,7 @@ if __name__ == "__main__":
         else:
             respond(text="You must provide an API key after /set_key asd123")
 
+
     @app.command("/duse_db")
     def handle_use_db(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
         # Acknowledge command request
@@ -310,6 +316,7 @@ if __name__ == "__main__":
         else:
             respond(text="You must provide the DB alias after. eg /use_db bold-sky")
 
+
     def save_s3(
             key: str,
             value: str,
@@ -317,7 +324,9 @@ if __name__ == "__main__":
             context: BoltContext,
     ):
         user_id = context.actor_user_id or context.user_id
-        if key == "db_table" or key == "db_url" or key == "db_type":
+        if key == "db_table" \
+                or key == "db_url" \
+                or key == "db_type":
             bucket_key = context.team_id + "_" + user_id
         else:
             bucket_key = context.team_id
@@ -353,6 +362,7 @@ if __name__ == "__main__":
         except Exception as e:
             logger.error(f"save_s3, Encountered an error Exception, with boto3: {e}")
             return
+
 
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
     handler.start()

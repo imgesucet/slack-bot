@@ -193,7 +193,7 @@ def respond_to_app_mention(
             f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
 
         loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                text_query=text_query, table_name=table_name, db_url=db_url)
+                                                text_query=text_query, table_name=table_name, resourcename=db_url)
 
         wip_reply = post_wip_message_with_attachment(
             client=client,
@@ -259,8 +259,8 @@ def respond_to_new_message(
         if is_in_dm_with_bot is False and thread_ts is None:
             return
 
-        openai_api_key = context.get("OPENAI_API_KEY")
-        if openai_api_key is None:
+        api_key = context.get("api_key")
+        if api_key is None:
             return
 
         messages_in_context = []
@@ -365,7 +365,6 @@ def respond_to_new_message(
                 }
             )
 
-        api_key = None
         table_name = context.get("db_table")
         db_url = context.get("db_url")
         text_query = last_message["text"]

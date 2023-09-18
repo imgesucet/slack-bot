@@ -166,8 +166,7 @@ def set_s3_openai_api_key(context: BoltContext, next_, logger: logging.Logger):
                 config = json.loads(config_str)
                 logger.info(f"set_s3_openai_api_key, team_id, config={config}")
 
-                context["OPENAI_API_KEY"] = config.get("api_key")
-
+                context["api_key"] = config.get("api_key")
                 context["OPENAI_MODEL"] = config.get("model")
                 context["OPENAI_TEMPERATURE"] = config.get(
                     "temperature", DEFAULT_OPENAI_TEMPERATURE
@@ -190,11 +189,8 @@ def set_s3_openai_api_key(context: BoltContext, next_, logger: logging.Logger):
                 context["db_table"] = config.get("db_table")
                 context["db_url"] = config.get("db_url")
                 context["db_type"] = config.get("db_type")
-                context["api_key"] = config.get("api_key")
-
             else:
                 # The legacy data format
-                context["OPENAI_API_KEY"] = config_str
                 context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
                 context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
         except s3_client.exceptions.NoSuchKey as e:
@@ -205,7 +201,7 @@ def set_s3_openai_api_key(context: BoltContext, next_, logger: logging.Logger):
         context["OPENAI_API_VERSION"] = DEFAULT_OPENAI_API_VERSION
         context["OPENAI_DEPLOYMENT_ID"] = DEFAULT_OPENAI_DEPLOYMENT_ID
     except:  # noqa: E722
-        context["OPENAI_API_KEY"] = None
+        context["api_key"] = None
     next_()
 
 
@@ -225,7 +221,8 @@ def handle_set_db_table(ack, body, command, respond, context: BoltContext, logge
 
 
 @app.command("/get_db_tables")
-def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,payload: dict,):
+def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,
+                         payload: dict, ):
     # Acknowledge command request
     ack()
 
@@ -247,7 +244,8 @@ def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logg
     )
 
     try:
-        loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection/tables", resourcename=value)
+        loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection/tables",
+                                                resourcename=value)
         post_wip_message_with_attachment(
             client=client,
             channel=context.channel_id,
@@ -354,6 +352,7 @@ def handle_set_key(ack, body, command, respond, context: BoltContext, logger: lo
     else:
         respond(text="You must provide an API key after /set_key asd123")
 
+
 @app.command("/use_db")
 def handle_use_db(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
     # Acknowledge command request
@@ -378,8 +377,7 @@ def save_s3(
     user_id = context.actor_user_id or context.user_id
     if key == "db_table" \
             or key == "db_url" \
-            or key == "db_type" \
-            or key == "api_key":
+            or key == "db_type":
         bucket_key = context.team_id + "_" + user_id
     else:
         bucket_key = context.team_id
@@ -424,8 +422,13 @@ def render_home_tab(client: WebClient, context: BoltContext, logger: logging.Log
     message = DEFAULT_HOME_TAB_MESSAGE
     configure_label = DEFAULT_HOME_TAB_CONFIGURE_LABEL
     try:
-        s3_client.get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
-        message = "This app is ready to use in this workspace :raised_hands:"
+        response = s3_client.get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
+        body = response['Body'].read().decode('utf-8')
+        data = json.loads(body)
+        if data["api_key"] is not None:
+            message = "This app is ready to use in this workspace :raised_hands:"
+        else:
+            message = "This app is NOT ready to use in this workspace. Please configure it."
     except:  # noqa: E722
         pass
 
@@ -462,6 +465,7 @@ def handle_some_action(ack, body: dict, client: WebClient, context: BoltContext,
         },
     )
 
+
 @app.view("configure")
 def handle_modal_submission(ack, view: dict, context: BoltContext, logger):
     ack()
@@ -490,10 +494,11 @@ def handle_modal_submission(ack, view: dict, context: BoltContext, logger):
 
     return
 
+
 def validate_api_key_registration(view: dict, context: BoltContext, logger: logging.Logger):
     logger.info("validate_api_key_registration, init")
 
-    already_set_api_key = context.get("OPENAI_API_KEY")
+    already_set_api_key = context.get("api_key")
     inputs = view["state"]["values"]
     api_key = inputs["api_key"]["input"]["value"]
 
@@ -507,7 +512,6 @@ def validate_api_key_registration(view: dict, context: BoltContext, logger: logg
         text = "This API key seems to be invalid"
         logger.exception(e)
         raise Exception(text)
-
 
 
 def save_api_key_registration(
@@ -531,6 +535,7 @@ slack_handler = SlackRequestHandler(app=app)
 flask_app = Flask(__name__)
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
 
 @flask_app.route("/slack/configure", methods=["POST"])
 def slack_configure():
@@ -572,4 +577,3 @@ def oauth_redirect():
 @flask_app.route("/slack/install", methods=["GET"])
 def install():
     return slack_handler.handle(request)
-
