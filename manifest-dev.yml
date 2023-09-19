@@ -15,9 +15,9 @@ features:
       description: Set your API KEY
       usage_hint: "[API_KEY_HERE]"
       should_escape: false
-    - command: /dset_db_type
-      description: Set your DB type
-      usage_hint: "[POSTGRES]"
+    - command: /dpreview
+      description: Preview a DB table
+      usage_hint: "[tvl]"
       should_escape: false
     - command: /dset_db_url
       description: Set your DB Connection String URL

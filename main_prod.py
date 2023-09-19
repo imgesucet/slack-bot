@@ -9,7 +9,7 @@ from slack_sdk.http_retry.builtin_handlers import RateLimitErrorRetryHandler
 from slack_bolt import App, Ack, BoltContext
 from flask import Flask, jsonify, request
 
-from app.bolt_listeners import register_listeners, before_authorize, DEFAULT_LOADING_TEXT
+from app.bolt_listeners import register_listeners, before_authorize, DEFAULT_LOADING_TEXT, preview_table
 from app.env import (
     SLACK_APP_LOG_LEVEL,
     DEFAULT_OPENAI_MODEL,
@@ -219,35 +219,10 @@ def handle_set_db_table(ack, body, command, respond, context: BoltContext, logge
         save_s3("db_table", value, logger, context)
         respond(text=f"DB Table set to: {value}")  # Respond to the command
         try:
-            api_key = context["api_key"]
-            db_url = context["db_url"]
-            table_name = value
-            text_query = f"get 10 sample rows for {table_name}"
-            loading_text = fetch_data_from_genieapi(api_key=api_key,
-                                                    endpoint="/language_to_sql",
-                                                    text_query=text_query,
-                                                    table_name=table_name,
-                                                    resourcename=db_url,
-                                                    is_generate_code=False,
-                                                    )
-
-            is_in_dm_with_bot = True
-            messages = []
-            user_id = context.actor_user_id or context.user_id
-
-            # Use the built-in WebClient to upload the file
-            post_wip_message_with_attachment(
-                client=client,
-                channel=context.channel_id,
-                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-                loading_text=loading_text,
-                messages=messages,
-                user=user_id,
-            )
-
+            preview_table(context, client, payload, value)
         except Exception as e:
             logger.exception(e)
-            return respond(text=f"Failed to get DB tables")  # Respond to the command
+            return respond(text=f"Failed to run preview for table")  # Respond to the command
     else:
         respond(text="You must provide the DB Table after. eg /set_db_table tvl")
 
@@ -353,20 +328,23 @@ def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger
         return respond(text=f"Failed to get DB URLs")  # Respond to the command
 
 
-@app.command("/set_db_type")
-def handle_set_db_type(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+@app.command("/preview")
+def handle_set_db_type(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
     # Acknowledge command request
     ack()
 
+    db_table = context["db_table"]
     value = command['text']
-    logger.info(f"set_db_type!!!, value={value}")
+    logger.info(f"preview!!!, value={value}")
+    if not value:
+        value = db_table
     respond(text=DEFAULT_LOADING_TEXT)
 
-    if value:
-        save_s3("db_type", value, logger, context)
-        respond(text=f"DB type set to: {value}")  # Respond to the command
-    else:
-        respond(text="You must provide the DB Type after /set_db_type POSTGRES")
+    try:
+        preview_table(context, client, payload, value)
+    except Exception as e:
+        logger.exception(e)
+        return respond(text=f"Failed to run preview for table")  # Respond to the command
 
 
 @app.command("/set_key")

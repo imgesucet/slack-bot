@@ -48,7 +48,6 @@ TIMEOUT_ERROR_MESSAGE = (
     "Please try again later. :bow:"
 )
 
-
 URL_PATTERN_POSTGRES = re.compile(
     r'^(?:http|ftp)s?://'  # http:// or https://
     r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+(?:[A-Z]{2,6}\.?|[A-Z0-9-]{2,}\.?)|'  # domain...
@@ -107,6 +106,9 @@ def respond_to_app_mention(
     messages = [{"role": "system", "content": system_text}]
 
     api_key = context.get("api_key")
+    db_table = context.get("db_table")
+    is_in_dm_with_bot = payload.get("channel_type") == "im"
+
     try:
         if api_key is None:
             client.chat_postMessage(
@@ -157,33 +159,15 @@ def respond_to_app_mention(
             )
             last_message = msg_text
 
-        is_in_dm_with_bot = payload.get("channel_type") == "im"
-
-        wip_reply = post_wip_message(
+        post_wip_message(
             client=client,
             channel=context.channel_id,
             thread_ts=payload["ts"],
-            loading_text=DEFAULT_LOADING_TEXT,
+            loading_text=DEFAULT_LOADING_TEXT + f" db_table={db_table}",
             messages=messages,
             user=context.user_id,
         )
 
-        # (
-        #     messages,
-        #     num_context_tokens,
-        #     max_context_tokens,
-        # ) = messages_within_context_window(messages, model=context["OPENAI_MODEL"])
-        # num_messages = len([msg for msg in messages if msg.get("role") != "system"])
-        # if num_messages == 0:
-        #     update_wip_message(
-        #         client=client,
-        #         channel=context.channel_id,
-        #         ts=wip_reply["message"]["ts"],
-        #         text=f":warning: The previous message is too long ({num_context_tokens}/{max_context_tokens} prompt tokens).",
-        #         messages=messages,
-        #         user=context.user_id,
-        #     )
-        # else:
         api_key = None
         table_name = context.get("db_table")
         db_url = context.get("db_url")
@@ -195,7 +179,7 @@ def respond_to_app_mention(
         loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
                                                 text_query=text_query, table_name=table_name, resourcename=db_url)
 
-        wip_reply = post_wip_message_with_attachment(
+        post_wip_message_with_attachment(
             client=client,
             channel=context.channel_id,
             thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
@@ -204,31 +188,22 @@ def respond_to_app_mention(
             user=user_id,
         )
 
-    except Timeout:
-        if wip_reply is not None:
-            text = (
-                wip_reply.get("message", {}).get("text", "")
-                if wip_reply is not None
-                else ""
-            )
-            client.chat_update(
-                channel=context.channel_id,
-                ts=wip_reply["message"]["ts"],
-                text=text,
-            )
-    except Exception as e:
-        text = (
-            wip_reply.get("message", {}).get("text", "")
-            if wip_reply is not None
-            else ""
+    except Timeout as e:
+        text = f"bolt_listeners.py, Timeout, Failed to process request: {e}"
+        logger.exception(text)
+        client.chat_postMessage(
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            text=DEFAULT_ERROR_TEXT,
         )
-        logger.exception(text, e)
-        if wip_reply is not None:
-            client.chat_update(
-                channel=context.channel_id,
-                ts=wip_reply["message"]["ts"],
-                text=text,
-            )
+    except Exception as e:
+        text = f"bolt_listeners.py, Exception, Failed to process request: {e}"
+        logger.exception(text)
+        client.chat_postMessage(
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            text=DEFAULT_ERROR_TEXT,
+        )
 
 
 def respond_to_new_message(
@@ -366,7 +341,17 @@ def respond_to_new_message(
 
         table_name = context.get("db_table")
         db_url = context.get("db_url")
+        db_table = context.get("db_table")
         text_query = last_message["text"]
+
+        post_wip_message(
+            client=client,
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            loading_text=DEFAULT_LOADING_TEXT + f" db_table={db_table}",
+            messages=messages,
+            user=context.user_id,
+        )
 
         logger.info(
             f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
@@ -429,3 +414,31 @@ def before_authorize(
         )
         return BoltResponse(status=200, body="")
     next_()
+
+
+def preview_table(context, client, payload, value):
+    api_key = context["api_key"]
+    db_url = context["db_url"]
+    table_name = value
+    text_query = f"get 10 sample rows for {table_name}"
+    loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                            endpoint="/language_to_sql",
+                                            text_query=text_query,
+                                            table_name=table_name,
+                                            resourcename=db_url,
+                                            is_generate_code=False,
+                                            )
+
+    is_in_dm_with_bot = True
+    messages = []
+    user_id = context.actor_user_id or context.user_id
+
+    # Use the built-in WebClient to upload the file
+    post_wip_message_with_attachment(
+        client=client,
+        channel=context.channel_id,
+        thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+        loading_text=loading_text,
+        messages=messages,
+        user=user_id,
+    )

@@ -16,10 +16,10 @@ features:
       description: Set your API KEY
       usage_hint: "[API_KEY_HERE]"
       should_escape: false
-    - command: /set_db_type
+    - command: /preview
       url: https://gptinslack.defytrends.dev/slack/events
-      description: Set your DB type
-      usage_hint: "[POSTGRES]"
+      description: Preview a DB table
+      usage_hint: "tvl"
       should_escape: false
     - command: /set_db_url
       url: https://gptinslack.defytrends.dev/slack/events
