@@ -29,7 +29,7 @@ from app.slack_ops import (
     update_wip_message, post_wip_message_with_attachment,
 )
 
-from app.utils import redact_string, fetch_data_from_genieapi, DEFAULT_LOADING_TEXT
+from app.utils import redact_string, fetch_data_from_genieapi, DEFAULT_LOADING_TEXT, DEFAULT_ERROR_TEXT
 
 
 #
@@ -241,7 +241,7 @@ def respond_to_new_message(
         # Skip a new message by a different app
         return
 
-    wip_reply = None
+    is_in_dm_with_bot = payload.get("channel_type") == "im"
     try:
 
         messages_in_context = client.conversations_replies(
@@ -253,7 +253,6 @@ def respond_to_new_message(
         last_message = messages_in_context[-1]
         # print(f"--- the last message is :{last_message} \n")
 
-        is_in_dm_with_bot = payload.get("channel_type") == "im"
         is_no_mention_required = False
         thread_ts = payload.get("thread_ts")
         if is_in_dm_with_bot is False and thread_ts is None:
@@ -375,7 +374,7 @@ def respond_to_new_message(
         loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
                                                 text_query=text_query, table_name=table_name, resourcename=db_url)
 
-        wip_reply = post_wip_message_with_attachment(
+        post_wip_message_with_attachment(
             client=client,
             channel=context.channel_id,
             thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
@@ -384,29 +383,22 @@ def respond_to_new_message(
             user=user_id,
         )
 
-    except Timeout:
-        if wip_reply is not None:
-            text = (
-                (
-                    wip_reply.get("message", {}).get("text", "")
-                    if wip_reply is not None
-                    else ""
-                )
-            )
-            client.chat_update(
-                channel=context.channel_id,
-                ts=wip_reply["message"]["ts"],
-                text=text,
-            )
+    except Timeout as e:
+        text = f"bolt_listeners.py, Timeout, Failed to process request: {e}"
+        logger.exception(text)
+        client.chat_postMessage(
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            text=DEFAULT_ERROR_TEXT,
+        )
     except Exception as e:
-        text = f":warning: Failed to process your request: {e}"
-        logger.exception(text, e)
-        if wip_reply is not None:
-            client.chat_update(
-                channel=context.channel_id,
-                ts=wip_reply["message"]["ts"],
-                text=text,
-            )
+        text = f"bolt_listeners.py, Exception, Failed to process request: {e}"
+        logger.exception(text)
+        client.chat_postMessage(
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            text=DEFAULT_ERROR_TEXT,
+        )
 
 
 def register_listeners(app: App):

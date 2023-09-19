@@ -8,6 +8,8 @@ from typing import List, Dict
 from slack_sdk.web import WebClient, SlackResponse
 from slack_bolt import BoltContext
 
+from app.utils import DEFAULT_ERROR_TEXT
+
 
 # ----------------------------
 # General operations in a channel
@@ -69,7 +71,7 @@ def post_wip_message_with_attachment(
         loading_text: list,
         messages: List[Dict[str, str]],
         user: str,
-) -> SlackResponse:
+):
     try:
         sql = loading_text.get("sql_query", None)
     except KeyError:
@@ -115,7 +117,7 @@ def post_wip_message_with_attachment(
             },
         )
 
-    if file_json_size > 0:
+    if file_json_size > 0 and len(json_obj) > 0:
         client.files_upload_v2(
             channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
             thread_ts=thread_ts,
@@ -128,7 +130,7 @@ def post_wip_message_with_attachment(
         )
         print(f"post_wip_message_with_attachment, data.json, done")
 
-    if file_txt_size > 0:
+    if file_txt_size > 0 and len(json_obj) > 0:
         client.files_upload_v2(
             channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
             thread_ts=thread_ts,
@@ -152,6 +154,19 @@ def post_wip_message_with_attachment(
             content=file_png,
             filename="data.png"  # the filename that will be displayed in Slack
         )
+
+    # ERROR MSG
+    if len(json_obj) == 0 or not json_obj:
+        client.chat_postMessage(
+            channel=channel,
+            thread_ts=thread_ts,
+            text=DEFAULT_ERROR_TEXT,
+            metadata={
+                "event_type": "chat-gpt-convo",
+                "event_payload": {"messages": system_messages, "user": user},
+            },
+        )
+
     print(f"post_wip_message_with_attachment, data.png, done")
 
 

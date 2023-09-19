@@ -15,6 +15,7 @@ from app.env import (
 import requests
 
 DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
+DEFAULT_ERROR_TEXT = ":warning: No results were returned from your query. Please review the generated SQL and the associated table, then try again."
 
 def redact_string(input_string: str) -> str:
     """
