@@ -173,25 +173,28 @@ def post_wip_message_with_attachment(
 def json_to_slack_table(json_array):
     if not json_array:
         return '```No data available```'
+    try:
+        headers = list(json_array[0].keys())
+        table_data = [headers]
 
-    headers = list(json_array[0].keys())
-    table_data = [headers]
+        for json_object in json_array:
+            row_data = [str(json_object[header]) for header in headers]
+            table_data.append(row_data)
 
-    for json_object in json_array:
-        row_data = [str(json_object[header]) for header in headers]
-        table_data.append(row_data)
+        # Transpose data for column-wise length calculation
+        transposed_data = list(map(list, zip(*table_data)))
+        column_widths = [max(len(str(word)) for word in col) for col in transposed_data]
 
-    # Transpose data for column-wise length calculation
-    transposed_data = list(map(list, zip(*table_data)))
-    column_widths = [max(len(str(word)) for word in col) for col in transposed_data]
-
-    # Format the table
-    table_string = "```\n"  # start with opening ```
-    for row in table_data:
-        row_string = '| ' + ' | '.join(f"{x:<{y}}" for x, y in zip(row, column_widths)) + ' |\n'
-        table_string += row_string
-    table_string += "```"  # end with closing ```
-    return table_string
+        # Format the table
+        table_string = "```\n"  # start with opening ```
+        for row in table_data:
+            row_string = '| ' + ' | '.join(f"{x:<{y}}" for x, y in zip(row, column_widths)) + ' |\n'
+            table_string += row_string
+        table_string += "```"  # end with closing ```
+        return table_string
+    except Exception as e:
+        print(f"json_to_slack_table, error={e}")
+        return ""
 
 
 def update_wip_message(

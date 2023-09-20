@@ -442,3 +442,30 @@ def preview_table(context, client, payload, value):
         messages=messages,
         user=user_id,
     )
+
+
+def suggest_table(context, client, payload, value):
+    api_key = context["api_key"]
+    db_url = context["db_url"]
+    table_name = value
+    loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                            endpoint="/recommend_questions",
+                                            table_name=table_name,
+                                            resourcename=db_url,
+                                            )
+
+    is_in_dm_with_bot = True
+    messages = []
+    user_id = context.actor_user_id or context.user_id
+
+    print(f"suggest_table, loading_text={loading_text}")
+
+    # Use the built-in WebClient to upload the file
+    post_wip_message_with_attachment(
+        client=client,
+        channel=context.channel_id,
+        thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+        loading_text=loading_text,
+        messages=messages,
+        user=user_id,
+    )

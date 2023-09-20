@@ -10,7 +10,7 @@ import botocore
 from slack_bolt import App, BoltContext
 from slack_sdk.web import WebClient
 
-from app.bolt_listeners import before_authorize, register_listeners, DEFAULT_LOADING_TEXT, preview_table
+from app.bolt_listeners import before_authorize, register_listeners, DEFAULT_LOADING_TEXT, preview_table, suggest_table
 from app.env import (
     SLACK_APP_LOG_LEVEL,
     DEFAULT_OPENAI_TEMPERATURE, DEFAULT_OPENAI_MODEL, DEFAULT_OPENAI_API_TYPE,
@@ -279,7 +279,7 @@ if __name__ == "__main__":
 
 
     @app.command("/dpreview")
-    def handle_set_db_type(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
+    def handle_preview(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
         # Acknowledge command request
         ack()
 
@@ -296,6 +296,26 @@ if __name__ == "__main__":
         except Exception as e:
             logger.exception(e)
             return respond(text=f"Failed to run preview for table")  # Respond to the command
+
+
+    @app.command("/dsuggest")
+    def handle_suggest(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
+        # Acknowledge command request
+        ack()
+
+        db_table = context["db_table"]
+        value = command['text']
+        logger.info(f"suggest!!!, value={value}")
+        if not value:
+            value = db_table
+
+        respond(text=DEFAULT_LOADING_TEXT)
+
+        try:
+            suggest_table(context, client, payload, value)
+        except Exception as e:
+            logger.exception(e)
+            return respond(text=f"Failed to run suggest for table")  # Respond to the command
 
 
 

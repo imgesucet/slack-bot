@@ -9,7 +9,7 @@ from slack_sdk.http_retry.builtin_handlers import RateLimitErrorRetryHandler
 from slack_bolt import App, Ack, BoltContext
 from flask import Flask, jsonify, request
 
-from app.bolt_listeners import register_listeners, before_authorize, DEFAULT_LOADING_TEXT, preview_table
+from app.bolt_listeners import register_listeners, before_authorize, DEFAULT_LOADING_TEXT, preview_table, suggest_table
 from app.env import (
     SLACK_APP_LOG_LEVEL,
     DEFAULT_OPENAI_MODEL,
@@ -329,7 +329,7 @@ def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger
 
 
 @app.command("/preview")
-def handle_set_db_type(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
+def handle_preview(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
     # Acknowledge command request
     ack()
 
@@ -345,6 +345,26 @@ def handle_set_db_type(ack, command, respond, context: BoltContext, logger: logg
     except Exception as e:
         logger.exception(e)
         return respond(text=f"Failed to run preview for table")  # Respond to the command
+
+
+@app.command("/suggest")
+def handle_suggest(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
+    # Acknowledge command request
+    ack()
+
+    db_table = context["db_table"]
+    value = command['text']
+    logger.info(f"suggest!!!, value={value}")
+    if not value:
+        value = db_table
+
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    try:
+        suggest_table(context, client, payload, value)
+    except Exception as e:
+        logger.exception(e)
+        return respond(text=f"Failed to run suggest for table")  # Respond to the command
 
 
 @app.command("/set_key")

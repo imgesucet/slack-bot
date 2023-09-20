@@ -45,6 +45,10 @@ features:
       usage_hint: "[bold-sky]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /suggest
+      description: Suggest Usage and Data Analysis Questions
+      usage_hint: "[tvl]"
+      should_escape: false
 oauth_config:
   redirect_urls:
     - https://gptinslack.defytrends.dev/slack/oauth_redirect
