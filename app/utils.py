@@ -175,3 +175,60 @@ def redact_credentials_from_url(url: None):
     ))
 
     return redacted_url
+
+
+def send_help_buttons(channel_id, client, text):
+    client.chat_postMessage(
+        channel=channel_id,
+        text=text,
+        blocks=[
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Need general assistance?"
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Help"
+                    },
+                    "value": "help_button",  # Not sure if you need a value here, but I added one just in case
+                    "action_id": "help:general"
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Need assistance with datasets?"
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Help with Datasets"
+                    },
+                    "value": "help_value",  # Optional value
+                    "action_id": "help:datasets"
+                }
+            },
+            {
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": "Need assistance with queries?"
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": "Help with Queries"
+                    },
+                    "value": "help_value",  # Optional value
+                    "action_id": "help:queries"
+                }
+            }
+        ]
+    )

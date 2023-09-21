@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 
 import botocore
 
@@ -28,7 +29,7 @@ from app.slack_ops import (
 import boto3
 
 from app.utils import cool_name_generator, redact_string, post_data_to_genieapi, fetch_data_from_genieapi, \
-    redact_credentials_from_url
+    redact_credentials_from_url, send_help_buttons
 from slack_handler import SlackRequestHandler
 from slack_s3_oauth_flow import LambdaS3OAuthFlow
 from slack_bolt.oauth.oauth_settings import OAuthSettings
@@ -265,11 +266,12 @@ def handle_get_db_tables(ack, body, command, respond, context: BoltContext, logg
 
     except Exception as e:
         logger.exception(e)
-        return respond(text=f"Failed to get DB tables")  # Respond to the command
+        respond(text=f"Failed to get DB tables")  # Respond to the command
+        send_help_buttons(context.channel_id, client, "")
 
 
 @app.command("/set_db_url")
-def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger: logging.Logger, client):
     # Acknowledge command request
     ack()
 
@@ -296,10 +298,11 @@ def handle_set_db_url(ack, body, command, respond, context: BoltContext, logger:
     else:
         respond(
             text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
+        send_help_buttons(context.channel_id, client, "")
 
 
 @app.command("/get_db_urls")
-def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger: logging.Logger, client):
     # Acknowledge command request
     ack()
 
@@ -325,7 +328,8 @@ def handle_get_db_urls(ack, body, command, respond, context: BoltContext, logger
 
     except Exception as e:
         logger.exception(e)
-        return respond(text=f"Failed to get DB URLs")  # Respond to the command
+        respond(text=f"Failed to get DB URLs")  # Respond to the command
+        send_help_buttons(context.channel_id, client, "")
 
 
 @app.command("/preview")
@@ -344,7 +348,8 @@ def handle_preview(ack, command, respond, context: BoltContext, logger: logging.
         preview_table(context, client, payload, value)
     except Exception as e:
         logger.exception(e)
-        return respond(text=f"Failed to run preview for table")  # Respond to the command
+        respond(text=f"Failed to run preview for table")  # Respond to the command
+        send_help_buttons(context.channel_id, client, "")
 
 
 @app.command("/suggest")
@@ -364,11 +369,12 @@ def handle_suggest(ack, command, respond, context: BoltContext, logger: logging.
         suggest_table(context, client, payload, value)
     except Exception as e:
         logger.exception(e)
-        return respond(text=f"Failed to run suggest for table")  # Respond to the command
+        respond(text=f"Failed to run suggest for table")  # Respond to the command
+        send_help_buttons(context.channel_id, client, "")
 
 
 @app.command("/set_key")
-def handle_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+def handle_set_key(ack, body, command, respond, context: BoltContext, logger: logging.Logger, client):
     # Acknowledge command request
     ack()
 
@@ -380,10 +386,11 @@ def handle_set_key(ack, body, command, respond, context: BoltContext, logger: lo
         respond(text=f"API Key set to: {api_key}")  # Respond to the command
     else:
         respond(text="You must provide an API key after /set_key asd123")
+        send_help_buttons(context.channel_id, client, "")
 
 
 @app.command("/use_db")
-def handle_use_db(ack, body, command, respond, context: BoltContext, logger: logging.Logger, ):
+def handle_use_db(ack, body, command, respond, context: BoltContext, logger: logging.Logger, client):
     # Acknowledge command request
     ack()
 
@@ -396,6 +403,24 @@ def handle_use_db(ack, body, command, respond, context: BoltContext, logger: log
         respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
     else:
         respond(text="You must provide the DB alias after. eg /use_db bold-sky")
+        send_help_buttons(context.channel_id, client, "")
+
+    @app.action(re.compile("^help:"))
+    def handle_help_actions(ack, body, say):
+        ack()  # Acknowledge the action
+
+        # Get the specific help action (e.g., "datasets" from "help:datasets")
+        help_topic = body["actions"][0]["action_id"].split(":")[1]
+
+        # Depending on the topic, send the appropriate help message
+        if help_topic == "datasets":
+            say("Here's how to use the datasets ...")
+        elif help_topic == "queries":
+            say("Here's how to make a query ...")
+        elif help_topic == "general":
+            say("Here's some helpful information to assist you. [Describe the process or steps here.]")
+        else:
+            say("I'm here to help! How can I assist you?")
 
 
 def save_s3(
@@ -606,4 +631,9 @@ def oauth_redirect():
 
 @flask_app.route("/slack/install", methods=["GET"])
 def install():
+    return slack_handler.handle(request)
+
+
+@flask_app.route('/slack/interactions', methods=['POST'])
+def handle_interaction():
     return slack_handler.handle(request)
