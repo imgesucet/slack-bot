@@ -1,0 +1,87 @@
+# Default values for gptinslack.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+gptinslack:
+  image: rg.nl-ams.scw.cloud/defytrendsregistry/gptinslack
+  tag: latest
+  # set to never when using local images
+  pullPolicy: Always
+  envsec:
+    OPENAI_API_KEY: OPENAI_API_KEY
+    SLACK_APP_TOKEN: SLACK_APP_TOKEN
+    SLACK_BOT_TOKEN: SLACK_BOT_TOKEN
+    SLACK_SIGNING_SECRET: SLACK_SIGNING_SECRET
+    SLACK_CLIENT_ID: SLACK_CLIENT_ID
+    SLACK_CLIENT_SECRET: SLACK_CLIENT_SECRET
+    SLACK_STATE_S3_BUCKET_NAME: SLACK_STATE_S3_BUCKET_NAME
+    SLACK_INSTALLATION_S3_BUCKET_NAME: SLACK_INSTALLATION_S3_BUCKET_NAME
+    API_KEY: API_KEY
+    AWS_ACCESS_KEY_ID: AWS_ACCESS_KEY_ID
+    AWS_SECRET_ACCESS_KEY: AWS_SECRET_ACCESS_KEY
+    AWS_STORAGE_BUCKET_NAME: AWS_STORAGE_BUCKET_NAME
+    AWS_S3_ENDPOINT_URL: AWS_S3_ENDPOINT_URL
+    AWS_S3_REGION_NAME: AWS_S3_REGION_NAME
+  env:
+    PORT: 9898
+    WEB_CONCURRENCY: 4
+    DEFAULT_OPENAI_TIMEOUT_SECONDS: 30
+    DEFAULT_OPENAI_MODEL: gpt-3.5-turbo
+    DEFAULT_OPENAI_TEMPERATURE: 1
+    GENIEAPI_HOST: https://genieapi.opengenie.ai/api
+    SERVER_ROLE: prod
+    SLACK_APP_LOG_LEVEL: DEBUG
+    TRANSLATE_MARKDOWN: true
+    SLACK_SCOPES: "app_mentions:read,channels:history,groups:history,im:history,mpim:history,chat:write.public,chat:write,users:read,files:read,files:write,commands"
+
+healthcheck:
+  url: /healthcheck
+  port: 9898
+
+service:
+  type: ClusterIP
+  port: 9898
+  externalPort: 9898
+  internalPort: 9898
+
+ingress:
+  enabled: true
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "8k"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/proxy-body-size: 25m
+  path: /
+  pathType: ImplementationSpecific
+  tls:
+    - hosts:
+        - gptinslack.opengenie.ai
+      secretName: io-opengenie-io-tls
+    - hosts:
+        - gptinslack.defytrends.io
+      secretName: io-defytrends-io-tls
+  hosts:
+    - gptinslack.opengenie.ai
+    - gptinslack.defytrends.io
+  servicePort: 9898
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #  cpu: 100m
+  #  memory: 128Mi
+  # requests:
+  #  cpu: 100m
+  #  memory: 128Mi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

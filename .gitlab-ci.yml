@@ -62,3 +62,18 @@ deploy-dev:
   <<: *helm_deploy
 
 
+deploy-io:
+  stage: deploy
+  when: manual
+  only:
+    - tags
+  variables:
+    ENVIRONMENT: io
+    K8S_CONTEXT: io
+    K8S_NAMESPACE: io
+    PROJECT_NAME: gptinslack
+  environment:
+    name: $ENVIRONMENT
+    url: https://gptinslack.opengenie.ai/
+  image: dtzar/helm-kubectl
+  <<: *helm_deploy
