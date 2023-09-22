@@ -31,6 +31,7 @@ gptinslack:
     DEFAULT_OPENAI_MODEL: gpt-3.5-turbo
     DEFAULT_OPENAI_TEMPERATURE: 1
     GENIEAPI_HOST: https://genieapi.defytrends.dev/api
+    GPTINSLACK_HOST: https://gptinslack.defytrends.dev
     SERVER_ROLE: prod
     SLACK_APP_LOG_LEVEL: DEBUG
     TRANSLATE_MARKDOWN: true

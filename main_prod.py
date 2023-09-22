@@ -20,8 +20,7 @@ from app.slack_ops import (
 
 import boto3
 
-from app.utils import fetch_data_from_genieapi
-from main_handlers import save_s3, handle_use_db_func, handle_set_key_func, handle_suggest_func, handle_preview_func, \
+from main_handlers import handle_use_db_func, handle_set_key_func, handle_suggest_func, handle_preview_func, \
     handle_get_db_urls_func, handle_set_db_url_func, handle_get_db_tables_func, handle_set_db_table_func, \
     set_s3_openai_api_key_func, handle_help_actions_func
 from main_prod_funcs import validate_api_key_registration, save_api_key_registration
@@ -34,15 +33,15 @@ logging.basicConfig(format="%(asctime)s %(message)s", level=SLACK_APP_LOG_LEVEL)
 AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = os.environ.get("AWS_STORAGE_BUCKET_NAME")
-AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "fr-par")
+AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "nl-ams")
 AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 AWS_S3_FILE_OVERWRITE = os.environ.get("AWS_S3_FILE_OVERWRITE", False)
 
-SLACK_APP_TOKEN = os.environ["SLACK_APP_TOKEN"]
-SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
 
 SLACK_CLIENT_ID = os.environ.get("SLACK_CLIENT_ID")
 SLACK_CLIENT_SECRET = os.environ.get("SLACK_CLIENT_SECRET")
+
+GPTINSLACK_HOST = os.environ.get("GPTINSLACK_HOST")
 
 s3_client = boto3.client(
     's3',
@@ -123,7 +122,7 @@ def register_revocation_handlers(app: App):
 oauth_settings = OAuthSettings(
     client_id=SLACK_CLIENT_ID,
     client_secret=SLACK_CLIENT_SECRET,
-    redirect_uri="https://gptinslack.defytrends.dev/slack/oauth_redirect",  # Optional
+    redirect_uri=f"{GPTINSLACK_HOST}/slack/oauth_redirect",  # Optional
     install_page_rendering_enabled=True,
     # scopes=["channels:read", "groups:read", ...],  # Add the scopes your app needs
     # redirect_uri="YOUR_OAUTH_REDIRECT_URL",  # This should match the Redirect URL set in your Slack app settings
@@ -297,12 +296,12 @@ def slack_configure():
     context = BoltContext()  # Again, assuming fictional context creation.
 
     try:
-        validate_api_key_registration(Ack(), view, context, logger)
+        validate_api_key_registration(view, context, logger)
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)})
 
     try:
-        save_api_key_registration(view, logger, context)
+        save_api_key_registration(view, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
     except Exception as e:
         logger.exception(e)
         return jsonify({'status': 'error', 'message': str(e)})

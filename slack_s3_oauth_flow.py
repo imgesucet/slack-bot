@@ -35,7 +35,7 @@ class LambdaS3OAuthFlow(OAuthFlow):
 
         AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
         AWS_SECRET_ACCESS_KEY = os.environ.get("AWS_SECRET_ACCESS_KEY")
-        AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "fr-par")
+        AWS_S3_REGION_NAME = os.environ.get("AWS_S3_REGION_NAME", "nl-ams")
         AWS_S3_ENDPOINT_URL = os.environ.get("AWS_S3_ENDPOINT_URL")
 
         s3_client = boto3.client(

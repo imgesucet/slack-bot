@@ -1,6 +1,6 @@
 display_information:
-  name: Genie
-  description: Genie slack bot app
+  name: Genie AI
+  description: Genie AI
   background_color: "#323336"
 features:
   app_home:
@@ -8,51 +8,51 @@ features:
     messages_tab_enabled: true
     messages_tab_read_only_enabled: false
   bot_user:
-    display_name: Genie Bot (prod)
+    display_name: Genie AI
     always_online: true
   slash_commands:
     - command: /set_key
-      url: https://gptinslack.defytrends.dev/slack/events
+      url: https://gptinslack.opengenie.ai/slack/events
       description: Set your API KEY
       usage_hint: "[API_KEY_HERE]"
       should_escape: false
     - command: /preview
-      url: https://gptinslack.defytrends.dev/slack/events
+      url: https://gptinslack.opengenie.ai/slack/events
       description: Preview a DB table
       usage_hint: "tvl"
       should_escape: false
     - command: /set_db_url
-      url: https://gptinslack.defytrends.dev/slack/events
+      url: https://gptinslack.opengenie.ai/slack/events
       description: Set your DB Connection String URL
       usage_hint: "[postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]"
       should_escape: false
     - command: /set_db_table
-      url: https://gptinslack.defytrends.dev/slack/events
+      url: https://gptinslack.opengenie.ai/slack/events
       description: Set your DB Table
       usage_hint: "[tvl]"
       should_escape: false
     - command: /get_db_urls
       description: Get your DB Connections
       should_escape: false
-      url: https://gptinslack.defytrends.dev/slack/events
+      url: https://gptinslack.opengenie.ai/slack/events
     - command: /get_db_tables
       description: Get your DB Connection Tables
       usage_hint: "[bold-sky]"
       should_escape: false
-      url: https://gptinslack.defytrends.dev/slack/events
+      url: https://gptinslack.opengenie.ai/slack/events
     - command: /use_db
       description: Use a DB Connection as default for Genie queries
       usage_hint: "[bold-sky]"
       should_escape: false
-      url: https://gptinslack.defytrends.dev/slack/events
+      url: https://gptinslack.opengenie.ai/slack/events
     - command: /suggest
       description: Suggest Usage and Data Analysis Questions
       usage_hint: "[tvl]"
       should_escape: false
-      url: https://gptinslack.defytrends.dev/slack/events
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
-    - https://gptinslack.defytrends.dev/slack/oauth_redirect
+    - https://gptinslack.opengenie.ai/slack/oauth_redirect
   scopes:
     bot:
       - app_mentions:read
@@ -68,7 +68,7 @@ oauth_config:
       - files:read
 settings:
   event_subscriptions:
-    request_url: https://gptinslack.defytrends.dev/slack/events
+    request_url: https://gptinslack.opengenie.ai/slack/events
     bot_events:
       - app_home_opened
       - app_mention
@@ -80,7 +80,7 @@ settings:
       - tokens_revoked
   interactivity:
     is_enabled: true
-    request_url: https://gptinslack.defytrends.dev/slack/interactions
+    request_url: https://gptinslack.opengenie.ai/slack/interactions
   org_deploy_enabled: false
   socket_mode_enabled: false
   token_rotation_enabled: false
