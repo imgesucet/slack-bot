@@ -54,7 +54,6 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
 
                 context["db_table"] = config.get("db_table")
                 context["db_url"] = config.get("db_url")
-                context["db_type"] = config.get("db_type")
             else:
                 # The legacy data format
                 context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
@@ -150,11 +149,10 @@ def handle_set_db_url_func(ack, command, respond, context: BoltContext, logger: 
         return send_help_buttons(context.channel_id, client, "")
 
     api_key = context["api_key"]
-    db_type = context["db_type"]
     try:
         resource_name = cool_name_generator(value)
         post_data_to_genieapi(api_key, "/update/user/database_connection", None,
-                              {"connection_string_url": value, "resourcename": resource_name, "db_type": db_type})
+                              {"connection_string_url": value, "resourcename": resource_name})
 
         save_s3("db_url", resource_name, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
         respond(text=f"DB URL set to: {redact_string(resource_name)}")  # Respond to the command
@@ -294,8 +292,7 @@ def save_s3(
 ):
     user_id = context.actor_user_id or context.user_id
     if key == "db_table" \
-            or key == "db_url" \
-            or key == "db_type":
+            or key == "db_url":
         bucket_key = context.team_id + "_" + user_id
     else:
         bucket_key = context.team_id
