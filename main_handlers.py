@@ -10,7 +10,6 @@ from app.utils import send_help_buttons, fetch_data_from_genieapi, redact_creden
     post_data_to_genieapi, redact_string
 
 from app.env import (
-    SLACK_APP_LOG_LEVEL,
     DEFAULT_OPENAI_MODEL,
     DEFAULT_OPENAI_TEMPERATURE,
     DEFAULT_OPENAI_API_TYPE,
@@ -81,16 +80,17 @@ def handle_set_db_table_func(ack, command, respond, context: BoltContext, logger
     logger.info(f"set_db_table!!!, value={value}")
     respond(text=DEFAULT_LOADING_TEXT)
 
-    if value:
-        save_s3("db_table", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
-        respond(text=f"DB Table set to: {value}")  # Respond to the command
-        try:
-            preview_table(context, client, payload, value)
-        except Exception as e:
-            logger.exception(e)
-            return respond(text=f"Failed to run preview for table")  # Respond to the command
-    else:
+    if value is None or value == "":
         respond(text="You must provide the DB Table after. eg /set_db_table tvl")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("db_table", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"DB Table set to: {value}")  # Respond to the command
+    try:
+        preview_table(context, client, payload, value)
+    except Exception as e:
+        logger.exception(e)
+        respond(text=f"Failed to run preview for table")  # Respond to the command
 
 
 def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
@@ -109,7 +109,8 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
         value = db_url
 
     if value is None or value == "":
-        return respond(text=f"Get DB Tables requires one argument.")  # Respond to the command
+        respond(text=f"Get DB Tables requires one argument.")  # Respond to the command
+        return send_help_buttons(context.channel_id, client, "")
 
     is_in_dm_with_bot = True
     messages = []
@@ -131,7 +132,7 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
     except Exception as e:
         logger.exception(e)
         respond(text=f"Failed to get DB tables")  # Respond to the command
-        send_help_buttons(context.channel_id, client, "")
+        return send_help_buttons(context.channel_id, client, "")
 
 
 def handle_set_db_url_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
@@ -143,25 +144,25 @@ def handle_set_db_url_func(ack, command, respond, context: BoltContext, logger: 
     logger.info(f"set_db_url!!!, value={value}")
     respond(text=DEFAULT_LOADING_TEXT)
 
-    if value:
-        api_key = context["api_key"]
-        db_type = context["db_type"]
-        try:
-            resource_name = cool_name_generator(value)
-            post_data_to_genieapi(api_key, "/update/user/database_connection", None,
-                                  {"connection_string_url": value, "resourcename": resource_name, "db_type": db_type})
-
-            save_s3("db_url", resource_name, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
-            respond(text=f"DB URL set to: {redact_string(resource_name)}")  # Respond to the command
-
-        except Exception as e:
-            logger.exception(e)
-            respond(text=f"Failed to set DB URL to: {redact_string(value)}")  # Respond to the command
-            return
-    else:
+    if value is None or value == "":
         respond(
             text="You must provide the DB URL after /set_db_url [postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]")
-        send_help_buttons(context.channel_id, client, "")
+        return send_help_buttons(context.channel_id, client, "")
+
+    api_key = context["api_key"]
+    db_type = context["db_type"]
+    try:
+        resource_name = cool_name_generator(value)
+        post_data_to_genieapi(api_key, "/update/user/database_connection", None,
+                              {"connection_string_url": value, "resourcename": resource_name, "db_type": db_type})
+
+        save_s3("db_url", resource_name, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+        respond(text=f"DB URL set to: {redact_string(resource_name)}")  # Respond to the command
+
+    except Exception as e:
+        logger.exception(e)
+        respond(text=f"Failed to set DB URL to: {redact_string(value)}")  # Respond to the command
+        return send_help_buttons(context.channel_id, client, "")
 
 
 def handle_get_db_urls_func(ack, respond, context: BoltContext, logger: logging.Logger, client):
@@ -191,7 +192,7 @@ def handle_get_db_urls_func(ack, respond, context: BoltContext, logger: logging.
     except Exception as e:
         logger.exception(e)
         respond(text=f"Failed to get DB URLs")  # Respond to the command
-        send_help_buttons(context.channel_id, client, "")
+        return send_help_buttons(context.channel_id, client, "")
 
 
 def handle_preview_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
@@ -210,7 +211,7 @@ def handle_preview_func(ack, command, respond, context: BoltContext, logger: log
     except Exception as e:
         logger.exception(e)
         respond(text=f"Failed to run preview for table")  # Respond to the command
-        send_help_buttons(context.channel_id, client, "")
+        return send_help_buttons(context.channel_id, client, "")
 
 
 def handle_suggest_func(ack, command, respond, context, logger, client, payload):
@@ -230,7 +231,7 @@ def handle_suggest_func(ack, command, respond, context, logger, client, payload)
     except Exception as e:
         logger.exception(e)
         respond(text=f"Failed to run suggest for table")  # Respond to the command
-        send_help_buttons(context.channel_id, client, "")
+        return send_help_buttons(context.channel_id, client, "")
 
 
 def handle_set_key_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
@@ -241,12 +242,12 @@ def handle_set_key_func(ack, command, respond, context: BoltContext, logger: log
     api_key = command['text']
     logger.info(f"set_key!!!, api_key={api_key}")
 
-    if api_key:
-        save_s3("api_key", api_key, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
-        respond(text=f"API Key set to: {api_key}")  # Respond to the command
-    else:
+    if api_key is None or api_key == "":
         respond(text="You must provide an API key after /set_key asd123")
-        send_help_buttons(context.channel_id, client, "")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("api_key", api_key, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"API Key set to: {api_key}")  # Respond to the command
 
 
 def handle_use_db_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
@@ -258,12 +259,12 @@ def handle_use_db_func(ack, command, respond, context: BoltContext, logger: logg
     logger.info(f"use_db!!!, value={value}")
     respond(text=DEFAULT_LOADING_TEXT)
 
-    if value:
-        save_s3("db_url", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
-        respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
-    else:
+    if value is None or value == "":
         respond(text="You must provide the DB alias after. eg /use_db bold-sky")
-        send_help_buttons(context.channel_id, client, "")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("db_url", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
 
 
 def handle_help_actions_func(ack, body, say):
