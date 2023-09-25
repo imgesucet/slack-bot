@@ -42,6 +42,9 @@ SLACK_CLIENT_ID = os.environ.get("SLACK_CLIENT_ID")
 SLACK_CLIENT_SECRET = os.environ.get("SLACK_CLIENT_SECRET")
 
 GPTINSLACK_HOST = os.environ.get("GPTINSLACK_HOST")
+PREFIX = ""
+if GPTINSLACK_HOST == "https://gptinslack.defytrends.dev":
+    PREFIX = "p"
 
 s3_client = boto3.client(
     's3',
@@ -152,45 +155,45 @@ def set_s3_openai_api_key(context: BoltContext, next_, logger: logging.Logger):
     return set_s3_openai_api_key_func(context, next_, logger, s3_client, AWS_STORAGE_BUCKET_NAME)
 
 
-@app.command("/set_db_table")
+@app.command(f"/{PREFIX}set_db_table")
 def handle_set_db_table(ack, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,
                         payload: dict):
     return handle_set_db_table_func(ack, command, respond, context, logger, client, payload, s3_client,
                                     AWS_STORAGE_BUCKET_NAME)
 
 
-@app.command("/get_db_tables")
+@app.command(f"/{PREFIX}/get_db_tables")
 def handle_get_db_tables(ack, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,
                          payload: dict):
     return handle_get_db_tables_func(ack, command, respond, context, logger, client, payload)
 
 
-@app.command("/set_db_url")
+@app.command(f"/{PREFIX}/set_db_url")
 def handle_set_db_url(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
     return handle_set_db_url_func(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)
 
 
-@app.command("/get_db_urls")
+@app.command(f"/{PREFIX}/get_db_urls")
 def handle_get_db_urls(ack, respond, context: BoltContext, logger: logging.Logger, client):
     return handle_get_db_urls_func(ack, respond, context, logger, client)
 
 
-@app.command("/preview")
+@app.command(f"/{PREFIX}/preview")
 def handle_preview(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
     return handle_preview_func(ack, command, respond, context, logger, client, payload)
 
 
-@app.command("/suggest")
+@app.command(f"/{PREFIX}/suggest")
 def handle_suggest(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
     return handle_suggest_func(ack, command, respond, context, logger, client, payload)
 
 
-@app.command("/set_key")
+@app.command(f"/{PREFIX}/set_key")
 def handle_set_key(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
     return handle_set_key_func(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)
 
 
-@app.command("/use_db")
+@app.command(f"/{PREFIX}/use_db")
 def handle_use_db(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
     return handle_use_db_func(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)
 

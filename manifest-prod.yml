@@ -11,41 +11,41 @@ features:
     display_name: Genie Bot (prod)
     always_online: true
   slash_commands:
-    - command: /set_key
+    - command: /pset_key
       url: https://gptinslack.defytrends.dev/slack/events
       description: Set your API KEY
       usage_hint: "[API_KEY_HERE]"
       should_escape: false
-    - command: /preview
+    - command: /ppreview
       url: https://gptinslack.defytrends.dev/slack/events
       description: Preview a DB table
       usage_hint: "tvl"
       should_escape: false
-    - command: /set_db_url
+    - command: /pset_db_url
       url: https://gptinslack.defytrends.dev/slack/events
       description: Set your DB Connection String URL
       usage_hint: "[postgres://{user}:{password}@{host}:{port}/{db_name}?sslmode=require]"
       should_escape: false
-    - command: /set_db_table
+    - command: /pset_db_table
       url: https://gptinslack.defytrends.dev/slack/events
       description: Set your DB Table
       usage_hint: "[tvl]"
       should_escape: false
-    - command: /get_db_urls
+    - command: /pget_db_urls
       description: Get your DB Connections
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
-    - command: /get_db_tables
+    - command: /pget_db_tables
       description: Get your DB Connection Tables
       usage_hint: "[bold-sky]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
-    - command: /use_db
+    - command: /puse_db
       description: Use a DB Connection as default for Genie queries
       usage_hint: "[bold-sky]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
-    - command: /suggest
+    - command: /psuggest
       description: Suggest Usage and Data Analysis Questions
       usage_hint: "[tvl]"
       should_escape: false
