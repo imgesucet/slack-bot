@@ -162,38 +162,38 @@ def handle_set_db_table(ack, command, respond, context: BoltContext, logger: log
                                     AWS_STORAGE_BUCKET_NAME)
 
 
-@app.command(f"/{PREFIX}/get_db_tables")
+@app.command(f"/{PREFIX}get_db_tables")
 def handle_get_db_tables(ack, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,
                          payload: dict):
     return handle_get_db_tables_func(ack, command, respond, context, logger, client, payload)
 
 
-@app.command(f"/{PREFIX}/set_db_url")
+@app.command(f"/{PREFIX}set_db_url")
 def handle_set_db_url(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
     return handle_set_db_url_func(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)
 
 
-@app.command(f"/{PREFIX}/get_db_urls")
+@app.command(f"/{PREFIX}get_db_urls")
 def handle_get_db_urls(ack, respond, context: BoltContext, logger: logging.Logger, client):
     return handle_get_db_urls_func(ack, respond, context, logger, client)
 
 
-@app.command(f"/{PREFIX}/preview")
+@app.command(f"/{PREFIX}preview")
 def handle_preview(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
     return handle_preview_func(ack, command, respond, context, logger, client, payload)
 
 
-@app.command(f"/{PREFIX}/suggest")
+@app.command(f"/{PREFIX}suggest")
 def handle_suggest(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
     return handle_suggest_func(ack, command, respond, context, logger, client, payload)
 
 
-@app.command(f"/{PREFIX}/set_key")
+@app.command(f"/{PREFIX}set_key")
 def handle_set_key(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
     return handle_set_key_func(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)
 
 
-@app.command(f"/{PREFIX}/use_db")
+@app.command(f"/{PREFIX}use_db")
 def handle_use_db(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
     return handle_use_db_func(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)
 
