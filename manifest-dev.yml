@@ -42,6 +42,10 @@ features:
       description: Suggest Usage and Data Analysis Questions
       usage_hint: "[tvl]"
       should_escape: false
+    - command: /dset_chat_history_size
+      description: Set chat history size for a conversational bot
+      usage_hint: "[6]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

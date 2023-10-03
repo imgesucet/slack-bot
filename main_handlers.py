@@ -54,6 +54,7 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
 
                 context["db_table"] = config.get("db_table")
                 context["db_url"] = config.get("db_url")
+                context["chat_history_size"] = config.get("chat_history_size")
             else:
                 # The legacy data format
                 context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
@@ -263,6 +264,24 @@ def handle_use_db_func(ack, command, respond, context: BoltContext, logger: logg
 
     save_s3("db_url", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
     respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
+
+
+def handle_set_chat_history_size_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
+                       AWS_STORAGE_BUCKET_NAME):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"set_chat_history_size!!!, value={value}")
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    if value is None or value == "":
+        respond(text="You must provide a value. eg /set_chat_history_size 10")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("chat_history_size", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"Default chat history size for queries set to: {value}")  # Respond to the command
+
 
 
 def handle_help_actions_func(ack, body, say):

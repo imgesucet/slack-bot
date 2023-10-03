@@ -21,7 +21,7 @@ from app.slack_ops import (
 )
 from main_handlers import handle_use_db_func, handle_set_key_func, handle_suggest_func, handle_preview_func, \
     handle_get_db_urls_func, handle_set_db_url_func, handle_get_db_tables_func, handle_set_db_table_func, \
-    set_s3_openai_api_key_func, handle_help_actions_func
+    set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func
 
 if __name__ == "__main__":
 
@@ -35,6 +35,7 @@ if __name__ == "__main__":
     AWS_S3_FILE_OVERWRITE = os.environ.get("AWS_S3_FILE_OVERWRITE", False)
     SLACK_APP_TOKEN = os.environ["SLACK_APP_TOKEN"]
     SLACK_BOT_TOKEN = os.environ["SLACK_BOT_TOKEN"]
+    PREFIX = "d"
 
     s3_client = boto3.client(
         's3',
@@ -104,53 +105,70 @@ if __name__ == "__main__":
         return set_s3_openai_api_key_func(context, next_, logger, s3_client, AWS_STORAGE_BUCKET_NAME)
 
 
-    @app.command("/dset_db_table")
+    @app.command(f"/{PREFIX}set_db_table")
     def handle_set_db_table(ack, command, respond, context: BoltContext, logger: logging.Logger,
                             client: WebClient, payload: dict):
-        return handle_set_db_table_func(ack, command, respond, context, logger, client, payload, s3_client,
-                                        AWS_STORAGE_BUCKET_NAME)
+        threading.Thread(target=handle_set_db_table_func,
+                         args=(ack, command, respond, context, logger, client, payload, s3_client,
+                               AWS_STORAGE_BUCKET_NAME)).start()
 
 
-    @app.command("/dget_db_tables")
+    @app.command(f"/{PREFIX}get_db_tables")
     def handle_get_db_tables(ack, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,
                              payload: dict):
-        return handle_get_db_tables_func(ack, command, respond, context, logger, client, payload)
+        threading.Thread(target=handle_get_db_tables_func,
+                         args=(ack, command, respond, context, logger, client, payload)).start()
 
 
-    @app.command("/dset_db_url")
+    @app.command(f"/{PREFIX}set_db_url")
     def handle_set_db_url(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
-        return handle_set_db_url_func(ack, command, respond, context, logger, client, s3_client,
-                                      AWS_STORAGE_BUCKET_NAME)
+        threading.Thread(target=handle_set_db_url_func,
+                         args=(ack, command, respond, context, logger, client, s3_client,
+                               AWS_STORAGE_BUCKET_NAME)).start()
 
 
-    @app.command("/dget_db_urls")
+    @app.command(f"/{PREFIX}get_db_urls")
     def handle_get_db_urls(ack, respond, context: BoltContext, logger: logging.Logger, client):
-        return handle_get_db_urls_func(ack, respond, context, logger, client)
+        threading.Thread(target=handle_get_db_urls_func,
+                         args=(ack, respond, context, logger, client)).start()
 
 
-    @app.command("/dpreview")
+    @app.command(f"/{PREFIX}preview")
     def handle_preview(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
-        return handle_preview_func(ack, command, respond, context, logger, client, payload)
+        threading.Thread(target=handle_preview_func,
+                         args=(ack, command, respond, context, logger, client, payload)).start()
 
 
-    @app.command("/dsuggest")
+    @app.command(f"/{PREFIX}suggest")
     def handle_suggest(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
-        return handle_suggest_func(ack, command, respond, context, logger, client, payload)
+        threading.Thread(target=handle_suggest_func,
+                         args=(ack, command, respond, context, logger, client, payload)).start()
 
 
-    @app.command("/dset_key")
+    @app.command(f"/{PREFIX}set_key")
     def handle_set_key(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
-        return handle_set_key_func(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)
+        threading.Thread(target=handle_set_key_func,
+                         args=(ack, command, respond, context, logger, client, s3_client,
+                               AWS_STORAGE_BUCKET_NAME)).start()
 
 
-    @app.command("/duse_db")
+    @app.command(f"/{PREFIX}use_db")
     def handle_use_db(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
-        return handle_use_db_func(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)
+        threading.Thread(target=handle_use_db_func,
+                         args=(ack, command, respond, context, logger, client, s3_client,
+                               AWS_STORAGE_BUCKET_NAME)).start()
+
+
+    @app.command(f"/{PREFIX}set_chat_history_size")
+    def handle_use_db(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
+        return handle_set_chat_history_size_func(ack, command, respond, context, logger, client, s3_client,
+                                                 AWS_STORAGE_BUCKET_NAME)
 
 
     @app.action(re.compile("^help:"))
     def handle_help_actions(ack, body, say):
-        return handle_help_actions_func(ack, body, say)
+        threading.Thread(target=handle_help_actions_func,
+                         args=(ack, body, say)).start()
 
 
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)

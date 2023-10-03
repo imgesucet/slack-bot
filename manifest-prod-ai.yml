@@ -50,6 +50,11 @@ features:
       usage_hint: "[tvl]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /set_chat_history_size
+      description: Set chat history size for a conversational bot
+      usage_hint: "[6]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.opengenie.ai/slack/oauth_redirect

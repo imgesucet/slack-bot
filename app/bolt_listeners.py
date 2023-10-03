@@ -171,13 +171,15 @@ def respond_to_app_mention(
         api_key = None
         table_name = context.get("db_table")
         db_url = context.get("db_url")
+        chat_history_size = context.get("chat_history_size")
+
         text_query = last_message
 
         logger.info(
             f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
 
         loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                text_query=text_query, table_name=table_name, resourcename=db_url)
+                                                text_query=text_query, table_name=table_name, resourcename=db_url, chat_history_size=chat_history_size)
 
         post_wip_message_with_attachment(
             client=client,
@@ -342,6 +344,8 @@ def respond_to_new_message(
         table_name = context.get("db_table")
         db_url = context.get("db_url")
         db_table = context.get("db_table")
+        chat_history_size = context.get("chat_history_size")
+
         text_query = last_message["text"]
 
         post_wip_message(
@@ -357,7 +361,7 @@ def respond_to_new_message(
             f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
 
         loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                text_query=text_query, table_name=table_name, resourcename=db_url)
+                                                text_query=text_query, table_name=table_name, resourcename=db_url, chat_history_size=chat_history_size)
 
         post_wip_message_with_attachment(
             client=client,
