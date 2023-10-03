@@ -55,6 +55,11 @@ features:
       usage_hint: "[6]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /ppredict
+      description: Based on the context of the conversation, ask the AI to predict your next most probable questions
+      usage_hint: "[6]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.defytrends.dev/slack/oauth_redirect

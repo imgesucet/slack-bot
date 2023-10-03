@@ -55,6 +55,11 @@ features:
       usage_hint: "[6]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /predict
+      description: Based on the context of the conversation, ask the AI to predict your next most probable questions
+      usage_hint: "[6]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.opengenie.ai/slack/oauth_redirect

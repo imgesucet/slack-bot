@@ -179,7 +179,8 @@ def respond_to_app_mention(
             f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
 
         loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                text_query=text_query, table_name=table_name, resourcename=db_url, chat_history_size=chat_history_size)
+                                                text_query=text_query, table_name=table_name, resourcename=db_url,
+                                                chat_history_size=chat_history_size)
 
         post_wip_message_with_attachment(
             client=client,
@@ -361,7 +362,8 @@ def respond_to_new_message(
             f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
 
         loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                text_query=text_query, table_name=table_name, resourcename=db_url, chat_history_size=chat_history_size)
+                                                text_query=text_query, table_name=table_name, resourcename=db_url,
+                                                chat_history_size=chat_history_size)
 
         post_wip_message_with_attachment(
             client=client,
@@ -463,6 +465,29 @@ def suggest_table(context, client, payload, value):
     user_id = context.actor_user_id or context.user_id
 
     print(f"suggest_table, loading_text={loading_text}")
+
+    # Use the built-in WebClient to upload the file
+    post_wip_message_with_attachment(
+        client=client,
+        channel=context.channel_id,
+        thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+        loading_text=loading_text,
+        messages=messages,
+        user=user_id,
+    )
+
+
+def predict_table(context, client, payload, value):
+    api_key = context["api_key"]
+    loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                            endpoint="/predict_questions",
+                                            predict_count=value)
+
+    is_in_dm_with_bot = True
+    messages = []
+    user_id = context.actor_user_id or context.user_id
+
+    print(f"predict_table, loading_text={loading_text}")
 
     # Use the built-in WebClient to upload the file
     post_wip_message_with_attachment(

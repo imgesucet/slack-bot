@@ -23,7 +23,7 @@ import boto3
 
 from main_handlers import handle_use_db_func, handle_set_key_func, handle_suggest_func, handle_preview_func, \
     handle_get_db_urls_func, handle_set_db_url_func, handle_get_db_tables_func, handle_set_db_table_func, \
-    set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func
+    set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func, handle_predict_func
 from main_prod_funcs import validate_api_key_registration, save_api_key_registration
 from slack_handler import SlackRequestHandler
 from slack_s3_oauth_flow import LambdaS3OAuthFlow
@@ -207,9 +207,16 @@ def handle_use_db(ack, command, respond, context: BoltContext, logger: logging.L
 
 
 @app.command(f"/{PREFIX}set_chat_history_size")
-def handle_use_db(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
-    return handle_set_chat_history_size_func(ack, command, respond, context, logger, client, s3_client,
-                                             AWS_STORAGE_BUCKET_NAME)
+def handle_set_chat_history_size(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
+    threading.Thread(target=handle_set_chat_history_size_func,
+                     args=(ack, command, respond, context, logger, client, s3_client,
+                           AWS_STORAGE_BUCKET_NAME)).start()
+
+
+@app.command(f"/{PREFIX}predict")
+def handle_predict(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
+    threading.Thread(target=handle_predict_func,
+                     args=(ack, command, respond, context, logger, client, payload)).start()
 
 
 @app.action(re.compile("^help:"))

@@ -4,7 +4,7 @@ import botocore
 
 import boto3 as boto3
 from slack_bolt import BoltContext
-from app.bolt_listeners import DEFAULT_LOADING_TEXT, suggest_table, preview_table
+from app.bolt_listeners import DEFAULT_LOADING_TEXT, suggest_table, preview_table, predict_table
 from app.slack_ops import post_wip_message_with_attachment
 from app.utils import send_help_buttons, fetch_data_from_genieapi, redact_credentials_from_url, cool_name_generator, \
     post_data_to_genieapi, redact_string
@@ -266,8 +266,9 @@ def handle_use_db_func(ack, command, respond, context: BoltContext, logger: logg
     respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
 
 
-def handle_set_chat_history_size_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
-                       AWS_STORAGE_BUCKET_NAME):
+def handle_set_chat_history_size_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
+                                      s3_client,
+                                      AWS_STORAGE_BUCKET_NAME):
     # Acknowledge command request
     ack()
 
@@ -282,6 +283,23 @@ def handle_set_chat_history_size_func(ack, command, respond, context: BoltContex
     save_s3("chat_history_size", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
     respond(text=f"Default chat history size for queries set to: {value}")  # Respond to the command
 
+
+def handle_predict_func(ack, command, respond, context, logger, client, payload):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"predict!!!, value={value}")
+    if not value:
+        value = 2
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    try:
+        predict_table(context, client, payload, value)
+    except Exception as e:
+        logger.exception(e)
+        respond(text=f"Failed to run prediction")  # Respond to the command
+        return send_help_buttons(context.channel_id, client, "")
 
 
 def handle_help_actions_func(ack, body, say):
