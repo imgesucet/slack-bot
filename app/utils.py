@@ -49,6 +49,8 @@ def fetch_data_from_genieapi(
         is_generate_code=None,
         chat_history_size=None,
         predict_count=None,
+        team_id=None,
+        user_id=None,
 ):
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
@@ -74,6 +76,12 @@ def fetch_data_from_genieapi(
 
     if predict_count is not None:
         PARAMS_DEFAULT["predict_count"] = predict_count
+
+    if team_id is not None:
+        PARAMS_DEFAULT["slack_team_id"] = team_id
+
+    if user_id is not None:
+        PARAMS_DEFAULT["slack_user_id"] = user_id
 
     headers = {"X-API-Key": api_key}
 

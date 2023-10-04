@@ -17,6 +17,11 @@ from app.env import (
     DEFAULT_OPENAI_API_VERSION,
     DEFAULT_OPENAI_DEPLOYMENT_ID,
 )
+from app.slack_ops import (
+    build_home_tab,
+    DEFAULT_HOME_TAB_MESSAGE,
+    DEFAULT_HOME_TAB_CONFIGURE_LABEL
+)
 
 
 def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logger, s3_client, AWS_STORAGE_BUCKET_NAME):
@@ -69,6 +74,26 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
     except:  # noqa: E722
         context["api_key"] = None
     next_()
+
+
+def render_home_tab_func(client, context, logger, s3_client, AWS_STORAGE_BUCKET_NAME):
+    logger.info("render_home_tab, init")
+    message = DEFAULT_HOME_TAB_MESSAGE
+    configure_label = DEFAULT_HOME_TAB_CONFIGURE_LABEL
+    try:
+        response = s3_client.get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
+        body = response['Body'].read().decode('utf-8')
+        data = json.loads(body)
+        if data["api_key"] is not None:
+            message = "This app is ready to use in this workspace :raised_hands:"
+        else:
+            message = "This app is NOT ready to use in this workspace. Please configure it."
+    except:  # noqa: E722
+        pass
+    client.views_publish(
+        user_id=context.user_id,
+        view=build_home_tab(message, configure_label),
+    )
 
 
 def handle_set_db_table_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload: dict,
@@ -173,7 +198,7 @@ def handle_get_db_urls_func(ack, respond, context: BoltContext, logger: logging.
 
     api_key = context["api_key"]
     try:
-        connections = fetch_data_from_genieapi(api_key, "/list/user/database_connection")
+        connections = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection")
 
         # Create headers for the table
         table_header = "*Resource Name* | *Connection String URL*\n"
@@ -329,7 +354,8 @@ def save_s3(
 ):
     user_id = context.actor_user_id or context.user_id
     if key == "db_table" \
-            or key == "db_url":
+            or key == "db_url" \
+            or key == "chat_history_size":
         bucket_key = context.team_id + "_" + user_id
     else:
         bucket_key = context.team_id

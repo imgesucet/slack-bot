@@ -14,17 +14,13 @@ from app.bolt_listeners import before_authorize, register_listeners
 from app.env import (
     SLACK_APP_LOG_LEVEL,
 )
-from app.slack_ops import (
-    build_home_tab,
-    DEFAULT_HOME_TAB_MESSAGE,
-    DEFAULT_HOME_TAB_CONFIGURE_LABEL
-)
+
 from main_handlers import handle_use_db_func, handle_set_key_func, handle_suggest_func, handle_preview_func, \
     handle_get_db_urls_func, handle_set_db_url_func, handle_get_db_tables_func, handle_set_db_table_func, \
-    set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func, handle_predict_func
+    set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func, handle_predict_func, \
+    render_home_tab_func
 
 if __name__ == "__main__":
-
     # Create a Flask application
     healthcheck_app = Flask(__name__)
     AWS_ACCESS_KEY_ID = os.environ.get("AWS_ACCESS_KEY_ID")
@@ -79,25 +75,7 @@ if __name__ == "__main__":
 
     @app.event("app_home_opened")
     def render_home_tab(client: WebClient, context: BoltContext, logger: logging.Logger):
-        logger.info("render_home_tab, init")
-
-        message = DEFAULT_HOME_TAB_MESSAGE
-        configure_label = DEFAULT_HOME_TAB_CONFIGURE_LABEL
-        try:
-            response = s3_client.get_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
-            body = response['Body'].read().decode('utf-8')
-            data = json.loads(body)
-            if data["api_key"] is not None:
-                message = "This app is ready to use in this workspace :raised_hands:"
-            else:
-                message = "This app is NOT ready to use in this workspace. Please configure it."
-        except:  # noqa: E722
-            pass
-
-        client.views_publish(
-            user_id=context.user_id,
-            view=build_home_tab(message, configure_label),
-        )
+        render_home_tab_func(client, context, logger, s3_client, AWS_STORAGE_BUCKET_NAME)
 
 
     @app.middleware

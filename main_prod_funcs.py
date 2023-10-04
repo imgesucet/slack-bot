@@ -16,7 +16,7 @@ def validate_api_key_registration(view: dict, context: BoltContext, logger: logg
     logger.info(f"validate_api_key_registration, init, already_set_api_key={already_set_api_key}")
 
     try:
-        isauth = fetch_data_from_genieapi(api_key, "/isauth", None, None, None)
+        isauth = fetch_data_from_genieapi(api_key=api_key, endpoint="/isauth")
         if isauth["message"] != "ok":
             raise Exception("Invalid Genie API KEY")
     except Exception as e:

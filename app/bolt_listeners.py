@@ -176,11 +176,17 @@ def respond_to_app_mention(
         text_query = last_message
 
         logger.info(
-            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
+            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, chat_history_size={chat_history_size}")
 
-        loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                text_query=text_query, table_name=table_name, resourcename=db_url,
-                                                chat_history_size=chat_history_size)
+        loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                endpoint="/language_to_sql",
+                                                text_query=text_query,
+                                                table_name=table_name,
+                                                resourcename=db_url,
+                                                chat_history_size=chat_history_size,
+                                                team_id=context.team_id,
+                                                user_id=context.user_id,
+                                                )
 
         post_wip_message_with_attachment(
             client=client,
@@ -359,11 +365,17 @@ def respond_to_new_message(
         )
 
         logger.info(
-            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, ")
+            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, chat_history_size={chat_history_size}")
 
-        loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/language_to_sql",
-                                                text_query=text_query, table_name=table_name, resourcename=db_url,
-                                                chat_history_size=chat_history_size)
+        loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                endpoint="/language_to_sql",
+                                                text_query=text_query,
+                                                table_name=table_name,
+                                                resourcename=db_url,
+                                                chat_history_size=chat_history_size,
+                                                team_id=context.team_id,
+                                                user_id=context.user_id,
+                                                )
 
         post_wip_message_with_attachment(
             client=client,
@@ -479,9 +491,13 @@ def suggest_table(context, client, payload, value):
 
 def predict_table(context, client, payload, value):
     api_key = context["api_key"]
+
     loading_text = fetch_data_from_genieapi(api_key=api_key,
                                             endpoint="/predict_questions",
-                                            predict_count=value)
+                                            predict_count=value,
+                                            team_id=context.team_id,
+                                            user_id=context.user_id,
+                                            )
 
     is_in_dm_with_bot = True
     messages = []
