@@ -50,6 +50,10 @@ features:
       description: Based on the context of the conversation, ask the AI to predict your next most probable questions
       usage_hint: "[6]"
       should_escape: false
+    - command: /dlogin
+      description: Login your account to your company account
+      usage_hint: "[youremail@yourcompany.com]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

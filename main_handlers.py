@@ -274,6 +274,29 @@ def handle_set_key_func(ack, command, respond, context: BoltContext, logger: log
     respond(text=f"API Key set to: {api_key}")  # Respond to the command
 
 
+def handle_login_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
+                      AWS_STORAGE_BUCKET_NAME):
+    # Acknowledge command request
+    ack()
+
+    api_key = context["api_key"]
+    value = command['text']
+    logger.info(f"handle_login_func!!!, value={value}")
+    team_id = context.team_id
+    user_id = context.user_id
+    if value is None or value == "":
+        respond(text="You must provide a valid email key after /login test@mail.com")
+        return send_help_buttons(context.channel_id, client, "")
+
+    post_data_to_genieapi(api_key, "/link_app_user_to_company", None,
+                          {"email": value, "team_id_slack": team_id, "user_id_slack": user_id, "app_type":"slack"})
+
+    save_s3("email", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+
+    respond(
+        text=f"A confirmation email has been sent to: {value}, please confirm your login by accepting it.")  # Respond to the command
+
+
 def handle_use_db_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
                        AWS_STORAGE_BUCKET_NAME):
     # Acknowledge command request

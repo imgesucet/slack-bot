@@ -60,6 +60,11 @@ features:
       usage_hint: "[6]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /plogin
+      description: Login your account to your company account
+      usage_hint: "[youremail@yourcompany.com]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.defytrends.dev/slack/oauth_redirect

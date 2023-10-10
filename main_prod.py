@@ -21,10 +21,10 @@ from app.slack_ops import (
 
 import boto3
 
-from main_handlers import handle_use_db_func, handle_set_key_func, handle_suggest_func, handle_preview_func, \
+from main_handlers import handle_use_db_func, handle_suggest_func, handle_preview_func, \
     handle_get_db_urls_func, handle_set_db_url_func, handle_get_db_tables_func, handle_set_db_table_func, \
     set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func, handle_predict_func, \
-    render_home_tab_func
+    render_home_tab_func, handle_login_func, handle_set_key_func
 from main_prod_funcs import validate_api_key_registration, save_api_key_registration
 from slack_handler import SlackRequestHandler
 from slack_s3_oauth_flow import LambdaS3OAuthFlow
@@ -200,6 +200,10 @@ def handle_set_key(ack, command, respond, context: BoltContext, logger: logging.
     threading.Thread(target=handle_set_key_func,
                      args=(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)).start()
 
+@app.command(f"/{PREFIX}login")
+def handle_login(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
+    threading.Thread(target=handle_login_func,
+                     args=(ack, command, respond, context, logger, client, s3_client, AWS_STORAGE_BUCKET_NAME)).start()
 
 @app.command(f"/{PREFIX}use_db")
 def handle_use_db(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
