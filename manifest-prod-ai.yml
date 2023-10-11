@@ -65,6 +65,11 @@ features:
       usage_hint: "[youremail@yourcompany.com]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /set_db_schema
+      description: Set the Database schema you want to use for DB queries
+      usage_hint: "[public]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.opengenie.ai/slack/oauth_redirect

@@ -17,6 +17,7 @@ import requests
 DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
 DEFAULT_ERROR_TEXT = ":warning: No results were returned from your query. Please review the generated SQL and the associated table, then try again."
 
+
 def redact_string(input_string: str) -> str:
     """
     Redact sensitive information from a string (inspired by @quangnhut123)
@@ -51,9 +52,12 @@ def fetch_data_from_genieapi(
         predict_count=None,
         team_id=None,
         user_id=None,
+        db_schema=None
 ):
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
+
+    text_query = text_query.replace('```', '').replace('`', '').strip()
 
     PARAMS_DEFAULT = {
         "text_query": text_query,
@@ -63,7 +67,8 @@ def fetch_data_from_genieapi(
     }
 
     # Use arguments if provided, otherwise default
-    print(f"fetch_data_from_genieapi, api_key={api_key}, endpoint={endpoint}, text_query={text_query}, table_name={table_name}, resourcename={resourcename}")
+    print(
+        f"fetch_data_from_genieapi, api_key={api_key}, endpoint={endpoint}, text_query={text_query}, table_name={table_name}, resourcename={resourcename}")
     endpoint_url = URL_DEFAULT + endpoint
     if resourcename is not None:
         PARAMS_DEFAULT["resourcename"] = resourcename
@@ -82,6 +87,9 @@ def fetch_data_from_genieapi(
 
     if user_id is not None:
         PARAMS_DEFAULT["slack_user_id"] = user_id
+
+    if db_schema is not None:
+        PARAMS_DEFAULT["db_schema"] = db_schema
 
     headers = {"X-API-Key": api_key}
 

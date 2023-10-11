@@ -65,6 +65,11 @@ features:
       usage_hint: "[youremail@yourcompany.com]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /pset_db_schema
+      description: Set the Database schema you want to use for DB queries
+      usage_hint: "[public]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.defytrends.dev/slack/oauth_redirect

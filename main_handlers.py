@@ -59,6 +59,7 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
 
                 context["db_table"] = config.get("db_table")
                 context["db_url"] = config.get("db_url")
+                context["db_schema"] = config.get("db_schema")
                 context["chat_history_size"] = config.get("chat_history_size")
             else:
                 # The legacy data format
@@ -166,6 +167,8 @@ def handle_set_db_url_func(ack, command, respond, context: BoltContext, logger: 
     ack()
 
     value = command['text']
+    value = value.replace('```', '').replace('`', '').strip()
+
     logger.info(f"set_db_url!!!, value={value}")
     respond(text=DEFAULT_LOADING_TEXT)
 
@@ -274,6 +277,23 @@ def handle_set_key_func(ack, command, respond, context: BoltContext, logger: log
     respond(text=f"API Key set to: {api_key}")  # Respond to the command
 
 
+def handle_set_db_schema_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
+                        AWS_STORAGE_BUCKET_NAME):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"set_schema!!!, value={value}")
+
+    if value is None or value == "":
+        respond(text="You must provide a Database Schema after /set_schema public")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("db_schema", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"Database schema set to: {value}")  # Respond to the command
+
+
+
 def handle_login_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
                       AWS_STORAGE_BUCKET_NAME):
     # Acknowledge command request
@@ -378,6 +398,7 @@ def save_s3(
     user_id = context.actor_user_id or context.user_id
     if key == "db_table" \
             or key == "db_url" \
+            or key == "db_schema" \
             or key == "chat_history_size":
         bucket_key = context.team_id + "_" + user_id
     else:
