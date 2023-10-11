@@ -57,7 +57,8 @@ def fetch_data_from_genieapi(
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
 
-    text_query = text_query.replace('```', '').replace('`', '').strip()
+    if text_query is not None:
+        text_query = text_query.replace('```', '').replace('`', '').strip()
 
     PARAMS_DEFAULT = {
         "text_query": text_query,
