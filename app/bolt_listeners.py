@@ -473,11 +473,14 @@ def preview_table(context, client, payload, value):
 def suggest_table(context, client, payload, value):
     api_key = context["api_key"]
     db_url = context["db_url"]
+    db_schema = context["db_schema"]
+
     table_name = value
     loading_text = fetch_data_from_genieapi(api_key=api_key,
                                             endpoint="/recommend_questions",
                                             table_name=table_name,
                                             resourcename=db_url,
+                                            db_schema=db_schema,
                                             )
 
     is_in_dm_with_bot = True

@@ -127,9 +127,10 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
     logger.info(f"get_db_tables!!!")
     respond(text=DEFAULT_LOADING_TEXT)
 
-    api_key = context["api_key"]
-    db_url = context["db_url"]
+    api_key = context.get("api_key")
+    db_url = context.get("db_url")
     value = command['text']
+    db_schema = context.get("db_schema")
 
     if value == "":
         value = db_url
@@ -145,6 +146,7 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
     try:
         loading_text = fetch_data_from_genieapi(api_key=api_key,
                                                 endpoint="/list/user/database_connection/tables",
+                                                db_schema=db_schema,
                                                 resourcename=value)
         post_wip_message_with_attachment(
             client=client,
@@ -184,6 +186,8 @@ def handle_set_db_url_func(ack, command, respond, context: BoltContext, logger: 
                               {"connection_string_url": value, "resourcename": resource_name})
 
         save_s3("db_url", resource_name, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+        save_s3("db_schema", "", logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+
         respond(text=f"DB URL set to: {redact_string(resource_name)}")  # Respond to the command
 
     except Exception as e:
@@ -284,10 +288,6 @@ def handle_set_db_schema_func(ack, command, respond, context: BoltContext, logge
 
     value = command['text']
     logger.info(f"set_schema!!!, value={value}")
-
-    if value is None or value == "":
-        respond(text="You must provide a Database Schema after /set_schema public")
-        return send_help_buttons(context.channel_id, client, "")
 
     save_s3("db_schema", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
     respond(text=f"Database schema set to: {value}")  # Respond to the command
@@ -405,6 +405,10 @@ def save_s3(
         bucket_key = context.team_id
     logger.info(f"save_s3, init, bucket_key={bucket_key}")
 
+    operation = "save"
+    if value is None or value == "":
+        operation = "delete"
+
     try:
         # Step 1: Try to get the existing object from S3
         try:
@@ -422,11 +426,18 @@ def save_s3(
         data[key] = value
 
         # Step 3: Put the updated or new object back into S3
-        s3_client.put_object(
-            Bucket=AWS_STORAGE_BUCKET_NAME,
-            Key=bucket_key,
-            Body=json.dumps(data)
-        )
+        if operation == "save":
+            s3_client.put_object(
+                Bucket=AWS_STORAGE_BUCKET_NAME,
+                Key=bucket_key,
+                Body=json.dumps(data)
+            )
+        else:
+            print(f"save_s3, delete_object, bucket_key={bucket_key}")
+            s3_client.delete_object(
+                Bucket=AWS_STORAGE_BUCKET_NAME,
+                Key=bucket_key,
+            )
         return
     except botocore.exceptions.ClientError as e:
         # Specific exception handling for boto3's client errors
@@ -435,3 +446,6 @@ def save_s3(
     except Exception as e:
         logger.error(f"save_s3, Encountered an error Exception, with boto3: {e}")
         return
+
+
+
