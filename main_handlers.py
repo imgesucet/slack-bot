@@ -129,14 +129,15 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
 
     api_key = context.get("api_key")
     db_url = context.get("db_url")
-    value = command['text']
     db_schema = context.get("db_schema")
+
+    value = command['text']
 
     if value == "":
         value = db_url
 
     if value is None or value == "":
-        respond(text=f"Get DB Tables requires one argument.")  # Respond to the command
+        respond(text=f"Get DB Tables requires one argument Or a previously set DB with /use_db or /set_db_url")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
 
     is_in_dm_with_bot = True
@@ -331,6 +332,8 @@ def handle_use_db_func(ack, command, respond, context: BoltContext, logger: logg
         return send_help_buttons(context.channel_id, client, "")
 
     save_s3("db_url", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    save_s3("db_schema", "", logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+
     respond(text=f"Default DB for queries set to: {value}")  # Respond to the command
 
 
@@ -395,19 +398,7 @@ def save_s3(
         s3_client: boto3.client,
         AWS_STORAGE_BUCKET_NAME: str
 ):
-    user_id = context.actor_user_id or context.user_id
-    if key == "db_table" \
-            or key == "db_url" \
-            or key == "db_schema" \
-            or key == "chat_history_size":
-        bucket_key = context.team_id + "_" + user_id
-    else:
-        bucket_key = context.team_id
-    logger.info(f"save_s3, init, bucket_key={bucket_key}")
-
-    operation = "save"
-    if value is None or value == "":
-        operation = "delete"
+    bucket_key = get_bucket_key(context, key, logger)
 
     try:
         # Step 1: Try to get the existing object from S3
@@ -426,18 +417,11 @@ def save_s3(
         data[key] = value
 
         # Step 3: Put the updated or new object back into S3
-        if operation == "save":
-            s3_client.put_object(
-                Bucket=AWS_STORAGE_BUCKET_NAME,
-                Key=bucket_key,
-                Body=json.dumps(data)
-            )
-        else:
-            print(f"save_s3, delete_object, bucket_key={bucket_key}")
-            s3_client.delete_object(
-                Bucket=AWS_STORAGE_BUCKET_NAME,
-                Key=bucket_key,
-            )
+        s3_client.put_object(
+            Bucket=AWS_STORAGE_BUCKET_NAME,
+            Key=bucket_key,
+            Body=json.dumps(data)
+        )
         return
     except botocore.exceptions.ClientError as e:
         # Specific exception handling for boto3's client errors
@@ -447,5 +431,42 @@ def save_s3(
         logger.error(f"save_s3, Encountered an error Exception, with boto3: {e}")
         return
 
+
+
+def delete_s3(
+        key: str,
+        logger: logging.Logger,
+        context: BoltContext,
+        s3_client: boto3.client,
+        AWS_STORAGE_BUCKET_NAME: str
+):
+    bucket_key = get_bucket_key(context, key, logger)
+
+    try:
+        print(f"delete_s3, delete_object, bucket_key={bucket_key}")
+        s3_client.delete_object(
+            Bucket=AWS_STORAGE_BUCKET_NAME,
+            Key=bucket_key,
+        )
+    except botocore.exceptions.ClientError as e:
+        # Specific exception handling for boto3's client errors
+        logger.error(f"delete_s3, Encountered an error ClientError, with boto3: {e}")
+        return
+    except Exception as e:
+        logger.error(f"delete_s3, Encountered an error Exception, with boto3: {e}")
+        return
+
+
+def get_bucket_key(context, key, logger):
+    user_id = context.actor_user_id or context.user_id
+    if key == "db_table" \
+            or key == "db_url" \
+            or key == "db_schema" \
+            or key == "chat_history_size":
+        bucket_key = context.team_id + "_" + user_id
+    else:
+        bucket_key = context.team_id
+    logger.info(f"get_bucket_key, bucket_key={bucket_key}")
+    return bucket_key
 
 

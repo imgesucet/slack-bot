@@ -89,7 +89,7 @@ def fetch_data_from_genieapi(
     if user_id is not None:
         PARAMS_DEFAULT["slack_user_id"] = user_id
 
-    if db_schema is not None:
+    if db_schema:
         PARAMS_DEFAULT["db_schema"] = db_schema
 
     headers = {"X-API-Key": api_key}
