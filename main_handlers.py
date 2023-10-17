@@ -149,6 +149,27 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
                                                 endpoint="/list/user/database_connection/tables",
                                                 db_schema=db_schema,
                                                 resourcename=value)
+        json_obj = loading_text["result"]
+        blocks = []
+        for c in json_obj:
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"{c['table_name']}"
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"Use {c['table_name']} DB"
+                    },
+                    "value": c['table_name'],  # This will be passed to the action handler when clicked
+                    "action_id": f"button:set_db_table:{c['table_name']}"
+                }
+            })
+        respond(blocks=blocks)
+
         post_wip_message_with_attachment(
             client=client,
             channel=context.channel_id,
@@ -208,18 +229,27 @@ def handle_get_db_urls_func(ack, respond, context: BoltContext, logger: logging.
     try:
         connections = fetch_data_from_genieapi(api_key=api_key, endpoint="/list/user/database_connection")
 
-        # Create headers for the table
-        table_header = "*Resource Name* | *Connection String URL*\n"
-        strResponse = table_header
-        separator = "---------------- | ----------------------\n"  # You can adjust the dashes as per the expected length
-        strResponse += separator
-
-        # Add each connection to the table
+        # Create blocks with buttons for each connection
+        blocks = []
         for c in connections:
-            print(f"get_db_urls, connections, c={c} ")
-            strResponse += f"{c['resourcename']} | {redact_credentials_from_url(c['connection_string_url'])}\n"
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"{c['resourcename']} | {redact_credentials_from_url(c['connection_string_url'])}"
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"Use {c['resourcename']} DB"
+                    },
+                    "value": c['resourcename'],  # This will be passed to the action handler when clicked
+                    "action_id": f"button:use_db:{c['resourcename']}"
+                }
+            })
 
-        respond(text=strResponse)
+        respond(blocks=blocks)
 
     except Exception as e:
         logger.exception(e)

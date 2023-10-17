@@ -237,6 +237,20 @@ def handle_help_actions(ack, body, say):
     return handle_help_actions_func(ack, body, say)
 
 
+@app.action(re.compile("^button:.+:.+"))
+def handle_buttons_actions(ack, body, respond, context: BoltContext, logger: logging.Logger, client):
+    _, action, parameter = body['actions'][0]['action_id'].split(':')
+    command = {"text": parameter}
+    if action == 'use_db':
+        threading.Thread(target=handle_use_db_func,
+                         args=(ack, command, respond, context, logger, client, s3_client,
+                               AWS_STORAGE_BUCKET_NAME)).start()
+    if action == "set_db_table":
+        threading.Thread(target=handle_set_db_table,
+                         args=(ack, command, respond, context, logger, client, s3_client,
+                               AWS_STORAGE_BUCKET_NAME)).start()
+
+
 @app.event("app_home_opened")
 def render_home_tab(client: WebClient, context: BoltContext, logger: logging.Logger):
     render_home_tab_func(client, context, logger, s3_client, AWS_STORAGE_BUCKET_NAME)

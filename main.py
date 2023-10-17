@@ -170,5 +170,19 @@ if __name__ == "__main__":
                          args=(ack, body, say)).start()
 
 
+    @app.action(re.compile("^button:.+:.+"))
+    def handle_buttons_actions(ack, body, respond, context: BoltContext, logger: logging.Logger, client, payload):
+        _, action, parameter = body['actions'][0]['action_id'].split(':')
+        command = {"text": parameter}
+        if action == 'use_db':
+            threading.Thread(target=handle_use_db_func,
+                             args=(ack, command, respond, context, logger, client, s3_client,
+                                   AWS_STORAGE_BUCKET_NAME)).start()
+        if action == "set_db_table":
+            threading.Thread(target=handle_set_db_table_func,
+                             args=(ack, command, respond, context, logger, client, payload, s3_client,
+                                   AWS_STORAGE_BUCKET_NAME)).start()
+
+
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
     handler.start()
