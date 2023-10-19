@@ -4,7 +4,7 @@ import botocore
 
 import boto3 as boto3
 from slack_bolt import BoltContext
-from app.bolt_listeners import DEFAULT_LOADING_TEXT, suggest_table, preview_table, predict_table
+from app.bolt_listeners import DEFAULT_LOADING_TEXT, suggest_table, preview_table, predict_table, suggest_tables
 from app.slack_ops import post_wip_message_with_attachment
 from app.utils import send_help_buttons, fetch_data_from_genieapi, redact_credentials_from_url, cool_name_generator, \
     post_data_to_genieapi, redact_string
@@ -401,6 +401,28 @@ def handle_predict_func(ack, command, respond, context, logger, client, payload)
         logger.exception(e)
         respond(text=f"Failed to run prediction")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
+
+
+def handle_suggest_tables_func(ack, command, respond, context, logger, client, payload):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"handle_suggest_tables_func!!!, value={value}")
+    if not value:
+        respond(text="You must provide a query.")
+        return send_help_buttons(context.channel_id, client, "")
+
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    try:
+        suggest_tables(context, client, payload, value)
+    except Exception as e:
+        logger.exception(e)
+        respond(text=f"Failed to run handle_suggest_tables_func")  # Respond to the command
+        return send_help_buttons(context.channel_id, client, "")
+
+
 
 
 def handle_help_actions_func(ack, body, say):

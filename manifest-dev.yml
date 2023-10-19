@@ -58,6 +58,10 @@ features:
       description: Set the Database schema you want to use for DB queries
       usage_hint: "[public]"
       should_escape: false
+    - command: /dsuggest_tables
+      description: Suggest the best tables for your query
+      usage_hint: "[query]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

@@ -525,3 +525,30 @@ def predict_table(context, client, payload, value):
         messages=messages,
         user=user_id,
     )
+
+
+def suggest_tables(context, client, payload, value):
+    api_key = context["api_key"]
+    db_url = context["db_url"]
+
+    loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                            endpoint="/identify_tables_for_query",
+                                            text_query=value,
+                                            resourcename=db_url,
+                                            )
+
+    is_in_dm_with_bot = True
+    messages = []
+    user_id = context.actor_user_id or context.user_id
+
+    print(f"suggest_tables, loading_text={loading_text}")
+
+    # Use the built-in WebClient to upload the file
+    post_wip_message_with_attachment(
+        client=client,
+        channel=context.channel_id,
+        thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+        loading_text=loading_text,
+        messages=messages,
+        user=user_id,
+    )

@@ -18,7 +18,7 @@ from app.env import (
 from main_handlers import handle_use_db_func, handle_suggest_func, handle_preview_func, \
     handle_get_db_urls_func, handle_set_db_url_func, handle_get_db_tables_func, handle_set_db_table_func, \
     set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func, handle_predict_func, \
-    render_home_tab_func, handle_login_func, handle_set_key_func, handle_set_db_schema_func
+    render_home_tab_func, handle_login_func, handle_set_key_func, handle_set_db_schema_func, handle_suggest_tables_func
 
 if __name__ == "__main__":
     # Create a Flask application
@@ -162,6 +162,13 @@ if __name__ == "__main__":
     def handle_predict(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
         threading.Thread(target=handle_predict_func,
                          args=(ack, command, respond, context, logger, client, payload)).start()
+
+
+    @app.command(f"/{PREFIX}suggest_tables")
+    def handle_suggest_tables(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
+        threading.Thread(target=handle_suggest_tables_func,
+                         args=(ack, command, respond, context, logger, client, payload)).start()
+
 
 
     @app.action(re.compile("^help:"))

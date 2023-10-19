@@ -74,7 +74,7 @@ def post_wip_message_with_attachment(
 ):
     try:
         sql = loading_text.get("sql_query", None)
-    except KeyError:
+    except Exception as e:
         sql = None
 
     json_obj = loading_text["result"]

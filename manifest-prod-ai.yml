@@ -70,6 +70,11 @@ features:
       usage_hint: "[public]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /suggest_tables
+      description: Suggest the best tables for your query
+      usage_hint: "[query]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.opengenie.ai/slack/oauth_redirect
