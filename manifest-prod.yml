@@ -70,6 +70,11 @@ features:
       usage_hint: "[public]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /pset_ai_engine
+      description: Set the AI engine you want to use
+      usage_hint: "[llama_index]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
     - command: /psuggest_tables
       description: Suggest the best tables for your query
       usage_hint: "[query]"

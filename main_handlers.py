@@ -60,6 +60,7 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
                 context["db_table"] = config.get("db_table")
                 context["db_url"] = config.get("db_url")
                 context["db_schema"] = config.get("db_schema")
+                context["ai_engine"] = config.get("ai_engine")
                 context["chat_history_size"] = config.get("chat_history_size")
             else:
                 # The legacy data format
@@ -323,6 +324,18 @@ def handle_set_db_schema_func(ack, command, respond, context: BoltContext, logge
     save_s3("db_schema", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
     respond(text=f"Database schema set to: {value}")  # Respond to the command
 
+def handle_set_ai_engine_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
+                        AWS_STORAGE_BUCKET_NAME):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"set_ai_engine!!!, value={value}")
+
+    save_s3("ai_engine", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"AI Engine set to: {value}")  # Respond to the command
+
+
 
 
 def handle_login_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
@@ -514,6 +527,7 @@ def get_bucket_key(context, key, logger):
     if key == "db_table" \
             or key == "db_url" \
             or key == "db_schema" \
+            or key == "ai_engine" \
             or key == "chat_history_size":
         bucket_key = context.team_id + "_" + user_id
     else:

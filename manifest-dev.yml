@@ -62,6 +62,10 @@ features:
       description: Suggest the best tables for your query
       usage_hint: "[query]"
       should_escape: false
+    - command: /dset_ai_engine
+      description: Set the AI engine you want to use
+      usage_hint: "[llama_index]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

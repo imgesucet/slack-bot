@@ -74,15 +74,18 @@ def post_wip_message_with_attachment(
 ):
     try:
         sql = loading_text.get("sql_query", None)
+        score = loading_text.get("score", 0)
+        json_obj = loading_text.get("result", None)
+        base64_encoded_chart_image = loading_text.get("base64_encoded_chart_image", None)
     except Exception as e:
+        print(f"post_wip_message_with_attachment, error={e}")
         sql = None
-
-    json_obj = loading_text["result"]
-    try:
-        base64_encoded_chart_image = loading_text["base64_encoded_chart_image"]
-        print(f"post_wip_message_with_attachment, base64_encoded_chart_image={base64_encoded_chart_image}")
-    except KeyError:
+        score = None
+        json_obj = None
         base64_encoded_chart_image = None
+
+    print(f"post_wip_message_with_attachment, base64_encoded_chart_image={base64_encoded_chart_image}")
+
 
     table = json_to_slack_table(json_obj)
 
@@ -96,7 +99,7 @@ def post_wip_message_with_attachment(
     file_txt_size = len(file_txt)
     print(f"post_wip_message_with_attachment, file_txt_size={file_txt_size} bytes")
 
-    if base64_encoded_chart_image is not None:
+    if base64_encoded_chart_image:
         file_png = io.BytesIO(base64.b64decode(base64_encoded_chart_image)).getvalue()
         file_png_size = len(file_png)
         print(f"post_wip_message_with_attachment, file_png_size={file_png_size} bytes")
@@ -106,11 +109,22 @@ def post_wip_message_with_attachment(
 
     system_messages = [msg for msg in messages if msg["role"] == "system"]
 
-    if sql is not None:
+    if sql:
         client.chat_postMessage(
             channel=channel,
             thread_ts=thread_ts,
             text=sql,
+            metadata={
+                "event_type": "chat-gpt-convo",
+                "event_payload": {"messages": system_messages, "user": user},
+            },
+        )
+
+    if score:
+        client.chat_postMessage(
+            channel=channel,
+            thread_ts=thread_ts,
+            text="Calculated score: "+str(score),
             metadata={
                 "event_type": "chat-gpt-convo",
                 "event_payload": {"messages": system_messages, "user": user},

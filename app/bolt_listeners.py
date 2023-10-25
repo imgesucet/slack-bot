@@ -172,6 +172,7 @@ def respond_to_app_mention(
         table_name = context.get("db_table")
         db_url = context.get("db_url")
         db_schema = context.get("db_schema")
+        ai_engine = context.get("ai_engine")
 
         chat_history_size = context.get("chat_history_size")
 
@@ -189,6 +190,7 @@ def respond_to_app_mention(
                                                 team_id=context.team_id,
                                                 user_id=context.user_id,
                                                 db_schema=db_schema,
+                                                ai_engine=ai_engine,
                                                 )
 
         post_wip_message_with_attachment(
@@ -355,6 +357,7 @@ def respond_to_new_message(
         db_url = context.get("db_url")
         db_table = context.get("db_table")
         db_schema = context.get("db_schema")
+        ai_engine = context.get("ai_engine")
         chat_history_size = context.get("chat_history_size")
 
         text_query = last_message["text"]
@@ -380,6 +383,7 @@ def respond_to_new_message(
                                                 team_id=context.team_id,
                                                 user_id=context.user_id,
                                                 db_schema=db_schema,
+                                                ai_engine=ai_engine,
                                                 )
 
         post_wip_message_with_attachment(
@@ -442,7 +446,8 @@ def before_authorize(
 def preview_table(context, client, payload, value):
     api_key = context["api_key"]
     db_url = context["db_url"]
-    db_schema = context["db_schema"]
+    db_schema = context.get("db_schema")
+    ai_engine = context.get("ai_engine")
 
     table_name = value
     text_query = f"get 10 sample rows for {table_name}"
@@ -453,6 +458,7 @@ def preview_table(context, client, payload, value):
                                             resourcename=db_url,
                                             is_generate_code=False,
                                             db_schema=db_schema,
+                                            ai_engine=ai_engine,
                                             )
 
     is_in_dm_with_bot = True
