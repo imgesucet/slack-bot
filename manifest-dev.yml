@@ -54,6 +54,10 @@ features:
       description: Login your account to your company account
       usage_hint: "[youremail@yourcompany.com]"
       should_escape: false
+    - command: /dget_db_schemas
+      description: Get your DB Connection Schemas
+      usage_hint: "[bold-sky]"
+      should_escape: false
     - command: /dset_db_schema
       description: Set the Database schema you want to use for DB queries
       usage_hint: "[public]"

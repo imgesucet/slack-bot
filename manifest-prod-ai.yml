@@ -65,6 +65,11 @@ features:
       usage_hint: "[youremail@yourcompany.com]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /get_db_schemas
+      description: Get your DB Connection Schemas
+      usage_hint: "[bold-sky]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
     - command: /set_db_schema
       description: Set the Database schema you want to use for DB queries
       usage_hint: "[public]"

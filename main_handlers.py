@@ -138,7 +138,8 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
         value = db_url
 
     if value is None or value == "":
-        respond(text=f"Get DB Tables requires one argument Or a previously set DB with /use_db or /set_db_url")  # Respond to the command
+        respond(
+            text=f"Get DB Tables requires one argument Or a previously set DB with /use_db or /set_db_url")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
 
     is_in_dm_with_bot = True
@@ -186,6 +187,71 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
         return send_help_buttons(context.channel_id, client, "")
 
 
+def handle_get_db_schemas_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
+                               payload: dict):
+    # Acknowledge command request
+    ack()
+
+    logger.info(f"handle_get_db_schemas_func!!!")
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    api_key = context.get("api_key")
+    db_url = context.get("db_url")
+
+    value = command['text']
+
+    if value == "":
+        value = db_url
+
+    if value is None or value == "":
+        respond(
+            text=f"Get DB Schemas requires one argument Or a previously set DB with /use_db or /set_db_url")  # Respond to the command
+        return send_help_buttons(context.channel_id, client, "")
+
+    is_in_dm_with_bot = True
+    messages = []
+    user_id = context.actor_user_id or context.user_id
+
+    try:
+        loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                endpoint="/list/user/database_connection/schemas",
+                                                resourcename=value)
+        json_obj = loading_text["result"]
+        blocks = []
+        for c in json_obj:
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"{c}"
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"Use {c} DB"
+                    },
+                    "value": c,  # This will be passed to the action handler when clicked
+                    "action_id": f"button:set_db_schema:{c}"
+                }
+            })
+        respond(blocks=blocks)
+
+        post_wip_message_with_attachment(
+            client=client,
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            loading_text=loading_text,
+            messages=messages,
+            user=user_id,
+        )
+
+    except Exception as e:
+        logger.exception(e)
+        respond(text=f"Failed to get DB Schemas")  # Respond to the command
+        return send_help_buttons(context.channel_id, client, "")
+
+
 def handle_set_db_url_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
                            AWS_STORAGE_BUCKET_NAME):
     # Acknowledge command request
@@ -223,7 +289,7 @@ def handle_get_db_urls_func(ack, respond, context: BoltContext, logger: logging.
     # Acknowledge command request
     ack()
 
-    logger.info(f"get_db_urls!!!")
+    logger.info(f"handle_get_db_urls_func!!!")
     respond(text=DEFAULT_LOADING_TEXT)
 
     api_key = context["api_key"]
@@ -314,7 +380,7 @@ def handle_set_key_func(ack, command, respond, context: BoltContext, logger: log
 
 
 def handle_set_db_schema_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
-                        AWS_STORAGE_BUCKET_NAME):
+                              AWS_STORAGE_BUCKET_NAME):
     # Acknowledge command request
     ack()
 
@@ -324,8 +390,9 @@ def handle_set_db_schema_func(ack, command, respond, context: BoltContext, logge
     save_s3("db_schema", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
     respond(text=f"Database schema set to: {value}")  # Respond to the command
 
+
 def handle_set_ai_engine_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
-                        AWS_STORAGE_BUCKET_NAME):
+                              AWS_STORAGE_BUCKET_NAME):
     # Acknowledge command request
     ack()
 
@@ -334,8 +401,6 @@ def handle_set_ai_engine_func(ack, command, respond, context: BoltContext, logge
 
     save_s3("ai_engine", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
     respond(text=f"AI Engine set to: {value}")  # Respond to the command
-
-
 
 
 def handle_login_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
@@ -353,7 +418,7 @@ def handle_login_func(ack, command, respond, context: BoltContext, logger: loggi
         return send_help_buttons(context.channel_id, client, "")
 
     post_data_to_genieapi(api_key, "/link_app_user_to_company", None,
-                          {"email": value, "team_id_slack": team_id, "user_id_slack": user_id, "app_type":"slack"})
+                          {"email": value, "team_id_slack": team_id, "user_id_slack": user_id, "app_type": "slack"})
 
     save_s3("email", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
 
@@ -436,8 +501,6 @@ def handle_suggest_tables_func(ack, command, respond, context, logger, client, p
         return send_help_buttons(context.channel_id, client, "")
 
 
-
-
 def handle_help_actions_func(ack, body, say):
     ack()  # Acknowledge the action
 
@@ -497,7 +560,6 @@ def save_s3(
         return
 
 
-
 def delete_s3(
         key: str,
         logger: logging.Logger,
@@ -534,5 +596,3 @@ def get_bucket_key(context, key, logger):
         bucket_key = context.team_id
     logger.info(f"get_bucket_key, bucket_key={bucket_key}")
     return bucket_key
-
-
