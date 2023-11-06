@@ -509,11 +509,11 @@ def handle_help_actions_func(ack, body, say):
 
     # Depending on the topic, send the appropriate help message
     if help_topic == "datasets":
-        say("Have you configured your database URL? If you haven't, you can configure your database URL by using /set_db_url. If you already configured your database, to view the tables in your database, please use the command /get_db_tables.  Check our manual: https://app.gitbook.com/o/-MlJQzSxP3S_w4ry8T3u/s/IUsWmXCZzIOVHSaRM5Ws/overview/data-bases-and-data-lakes-we-support")
+        say("Have you configured your database URL? If you haven't, you can configure your database URL by using /set_db_url. If you already configured your database, to view the tables in your database, please use the command /get_db_tables.  Check our manual: https://opengenie.gitbook.io/genie-ai-slack-bot/overview/data-bases-and-data-lakes-we-support")
     elif help_topic == "queries":
-        say("Check frequently asked queries to see what other users have been quering  https://opengenie.gitbook.io/genie-ai-slack-bot/product-guides/f.a.q./queries Additionally, you can use the /suggest tool for inspiration on suggested questions to ask your data!")
+        say("Check frequently asked queries to see what other users have been querying  https://opengenie.gitbook.io/genie-ai-slack-bot/product-guides/f.a.q./queries Additionally, you can use the /suggest tool for inspiration on suggested questions to ask your data!")
     elif help_topic == "general":
-        say("Here is our manual, where you can find setup instructions at this link: https://opengenie.gitbook.io/genie-ai-slack-bot . If you encounter an error or bug, please contact our support team at help@opengenie.on.spiceworks.com. Our dedicated technical agents will promptly create a ticket and go the extra mile to resolve your issue")
+        say("Here is our manual, where you can find setup instructions at this link: https://opengenie.gitbook.io/genie-ai-slack-bot/overview/what-genie-ai-can-do . If you encounter an error or bug, please contact our support team at help@opengenie.on.spiceworks.com . Our dedicated technical agents will promptly create a ticket and go the extra mile to resolve your issue")
     else:
         say("I'm here to help! How can I assist you?")
 
