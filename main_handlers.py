@@ -400,6 +400,9 @@ def handle_set_ai_engine_func(ack, command, respond, context: BoltContext, logge
     logger.info(f"set_ai_engine!!!, value={value}")
 
     save_s3("ai_engine", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    save_s3("db_schema", "", logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    save_s3("db_table", "", logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+
     respond(text=f"AI Engine set to: {value}")  # Respond to the command
 
 

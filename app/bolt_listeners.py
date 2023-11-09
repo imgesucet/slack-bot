@@ -159,14 +159,7 @@ def respond_to_app_mention(
             )
             last_message = msg_text
 
-        post_wip_message(
-            client=client,
-            channel=context.channel_id,
-            thread_ts=payload["ts"],
-            loading_text=DEFAULT_LOADING_TEXT + f" db_table={db_table}",
-            messages=messages,
-            user=context.user_id,
-        )
+
 
         api_key = None
         table_name = context.get("db_table")
@@ -175,6 +168,15 @@ def respond_to_app_mention(
         ai_engine = context.get("ai_engine")
 
         chat_history_size = context.get("chat_history_size")
+
+        post_wip_message(
+            client=client,
+            channel=context.channel_id,
+            thread_ts=payload["ts"],
+            loading_text=DEFAULT_LOADING_TEXT + f" db_url={db_url}, db_table={db_table}, db_schema={db_schema}, ai_engine={ai_engine}",
+            messages=messages,
+            user=context.user_id,
+        )
 
         text_query = last_message
 
@@ -366,13 +368,13 @@ def respond_to_new_message(
             client=client,
             channel=context.channel_id,
             thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            loading_text=DEFAULT_LOADING_TEXT + f" db_table={db_table}",
+            loading_text=DEFAULT_LOADING_TEXT + f" db_url={db_url}, db_table={db_table}, db_schema={db_schema}, ai_engine={ai_engine}",
             messages=messages,
             user=context.user_id,
         )
 
         logger.info(
-            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, chat_history_size={chat_history_size}")
+            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, db_table={table_name}, db_schema={db_schema}, ai_engine={ai_engine}, text_query={text_query}, chat_history_size={chat_history_size}")
 
         loading_text = fetch_data_from_genieapi(api_key=api_key,
                                                 endpoint="/language_to_sql",

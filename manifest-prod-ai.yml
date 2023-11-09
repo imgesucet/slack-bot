@@ -37,12 +37,12 @@ features:
       url: https://gptinslack.opengenie.ai/slack/events
     - command: /get_db_tables
       description: Get your DB Connection Tables
-      usage_hint: "[bold-sky]"
+      usage_hint: "[bold-river]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
     - command: /use_db
       description: Use a DB Connection as default for Genie queries
-      usage_hint: "[bold-sky]"
+      usage_hint: "[bold-river]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
     - command: /suggest
@@ -67,7 +67,7 @@ features:
       url: https://gptinslack.opengenie.ai/slack/events
     - command: /get_db_schemas
       description: Get your DB Connection Schemas
-      usage_hint: "[bold-sky]"
+      usage_hint: "[bold-river]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
     - command: /set_db_schema
