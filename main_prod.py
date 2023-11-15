@@ -278,10 +278,10 @@ def handle_buttons_actions(ack, body, respond, context: BoltContext, logger: log
 
 
 @app.action("query_selected")
-def handle_query_selection(ack, context, client, payload, body):
+def handle_query_selection(ack, context, client, payload, body, respond):
     id = body["actions"][0]["selected_option"]["value"]
     threading.Thread(target=handle_query_selected_action,
-                     args=(ack, context, client, payload, id)).start()
+                     args=(ack, context, client, payload, respond, id)).start()
 
 
 @app.event("app_home_opened")

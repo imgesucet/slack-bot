@@ -212,10 +212,10 @@ if __name__ == "__main__":
 
 
     @app.action("query_selected")
-    def handle_query_selection(ack, context, client, payload, body):
+    def handle_query_selection(ack, context, client, payload, body, respond):
         id = body["actions"][0]["selected_option"]["value"]
         threading.Thread(target=handle_query_selected_action,
-                         args=(ack, context, client, payload, id)).start()
+                         args=(ack, context, client, payload, respond, id)).start()
 
 
     handler = SocketModeHandler(app, SLACK_APP_TOKEN)
