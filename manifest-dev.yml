@@ -70,6 +70,10 @@ features:
       description: Set the AI engine you want to use
       usage_hint: "[llama_index]"
       should_escape: false
+    - command: /dget_queries
+      description: Get a list of the queries you have used recently [skip,limit]
+      usage_hint: "[0,100]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

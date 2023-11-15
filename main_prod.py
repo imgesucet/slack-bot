@@ -25,7 +25,7 @@ from main_handlers import handle_use_db_func, handle_suggest_func, handle_previe
     handle_get_db_urls_func, handle_set_db_url_func, handle_get_db_tables_func, handle_set_db_table_func, \
     set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func, handle_predict_func, \
     render_home_tab_func, handle_login_func, handle_set_key_func, handle_set_db_schema_func, handle_suggest_tables_func, \
-    handle_set_ai_engine_func, handle_get_db_schemas_func
+    handle_set_ai_engine_func, handle_get_db_schemas_func, handle_show_queries_func, handle_query_selected_action
 from main_prod_funcs import validate_api_key_registration, save_api_key_registration
 from slack_handler import SlackRequestHandler
 from slack_s3_oauth_flow import LambdaS3OAuthFlow
@@ -204,7 +204,7 @@ def handle_set_key(ack, command, respond, context: BoltContext, logger: logging.
 
 @app.command(f"/{PREFIX}get_db_schemas")
 def handle_get_db_schemas(ack, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,
-                             payload: dict):
+                          payload: dict):
     threading.Thread(target=handle_get_db_schemas_func,
                      args=(ack, command, respond, context, logger, client, payload)).start()
 
@@ -252,6 +252,12 @@ def handle_suggest_tables(ack, command, respond, context: BoltContext, logger: l
                      args=(ack, command, respond, context, logger, client, payload)).start()
 
 
+@app.command(f"/{PREFIX}get_queries")
+def handle_suggest_tables(ack, command, respond, context: BoltContext, logger: logging.Logger, client, payload):
+    threading.Thread(target=handle_show_queries_func,
+                     args=(ack, command, respond, context, logger, client, payload)).start()
+
+
 @app.action(re.compile("^help:"))
 def handle_help_actions(ack, body, say):
     return handle_help_actions_func(ack, body, say)
@@ -269,6 +275,13 @@ def handle_buttons_actions(ack, body, respond, context: BoltContext, logger: log
         threading.Thread(target=handle_set_db_table,
                          args=(ack, command, respond, context, logger, client, s3_client,
                                AWS_STORAGE_BUCKET_NAME)).start()
+
+
+@app.action("query_selected")
+def handle_query_selection(ack, context, client, payload, body):
+    id = body["actions"][0]["selected_option"]["value"]
+    threading.Thread(target=handle_query_selected_action,
+                     args=(ack, context, client, payload, id)).start()
 
 
 @app.event("app_home_opened")

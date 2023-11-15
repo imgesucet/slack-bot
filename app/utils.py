@@ -54,6 +54,8 @@ def fetch_data_from_genieapi(
         user_id=None,
         db_schema=None,
         ai_engine=None,
+        id=None,
+        execute_sql=None,
 ):
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
@@ -88,7 +90,10 @@ def fetch_data_from_genieapi(
         PARAMS_DEFAULT["db_schema"] = db_schema
     if ai_engine:
         PARAMS_DEFAULT["ai_engine"] = ai_engine
-
+    if id:
+        PARAMS_DEFAULT["id"] = id
+    if execute_sql:
+        PARAMS_DEFAULT["execute_sql"] = execute_sql
 
     headers = {"X-API-Key": api_key}
 

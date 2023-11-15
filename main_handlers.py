@@ -504,6 +504,68 @@ def handle_suggest_tables_func(ack, command, respond, context, logger, client, p
         return send_help_buttons(context.channel_id, client, "")
 
 
+def handle_show_queries_func(ack, command, respond, context, logger, client, payload):
+    ack()
+    api_key = context["api_key"]
+    team_id = context.team_id
+    user_id = context.user_id
+
+    loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/get_my_chat_history", team_id=team_id,
+                                            user_id=user_id)
+
+    queries = loading_text["result"]
+
+    # Building the select menu block
+    options = [{"text": {"type": "plain_text",
+                         "text": (query["question"][:72] + '...') if len(query["question"]) > 75 else query[
+                             "question"]}, "value": str(query["id"])} for query in queries]
+    blocks = [{
+        "type": "section",
+        "text": {"type": "mrkdwn", "text": "Select a question:"},
+        "accessory": {
+            "type": "static_select",
+            "placeholder": {"type": "plain_text", "text": "Choose a question"},
+            "options": options,
+            "action_id": "query_selected"
+        }
+    }]
+
+    respond(blocks=blocks)
+
+
+def handle_query_selected_action(ack, context, client, payload, id):
+    ack()
+    api_key = context["api_key"]
+    db_url = context["db_url"]
+    db_schema = context.get("db_schema")
+    team_id = context.team_id
+    user_id = context.user_id
+
+    loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                            endpoint="/get_my_chat_history",
+                                            team_id=team_id,
+                                            user_id=user_id,
+                                            id=id,
+                                            execute_sql=True,
+                                            resourcename=db_url,
+                                            db_schema=db_schema,
+                                            )
+
+    is_in_dm_with_bot = True
+    messages = []
+    user_id = context.actor_user_id or context.user_id
+
+    # Use the built-in WebClient to upload the file
+    post_wip_message_with_attachment(
+        client=client,
+        channel=context.channel_id,
+        thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+        loading_text=loading_text,
+        messages=messages,
+        user=user_id,
+    )
+
+
 def handle_help_actions_func(ack, body, say):
     ack()  # Acknowledge the action
 

@@ -85,6 +85,11 @@ features:
       usage_hint: "[query]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /pget_queries
+      description: Get a list of the queries you have used recently [skip,limit]
+      usage_hint: "[0,100]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.opengenie.ai/slack/oauth_redirect
