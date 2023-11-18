@@ -77,12 +77,14 @@ def post_wip_message_with_attachment(
         score = loading_text.get("score", 0)
         json_obj = loading_text.get("result", None)
         base64_encoded_chart_image = loading_text.get("base64_encoded_chart_image", None)
+        intermediate_steps = loading_text.get("intermediate_steps", [])
     except Exception as e:
         print(f"post_wip_message_with_attachment, error={e}")
         sql = None
         score = None
         json_obj = None
         base64_encoded_chart_image = None
+        intermediate_steps = []
 
     print(f"post_wip_message_with_attachment, base64_encoded_chart_image={base64_encoded_chart_image}")
 
@@ -168,6 +170,21 @@ def post_wip_message_with_attachment(
             content=file_png,
             filename="data.png"  # the filename that will be displayed in Slack
         )
+
+    if len(intermediate_steps) > 0:
+        intermediate_steps_table = json.dumps(intermediate_steps, indent=4)  # 'your_data' is your JSON data
+        intermediate_steps_table_file_txt = io.BytesIO(intermediate_steps_table.encode('utf-8')).getvalue()
+        client.files_upload_v2(
+            channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
+            thread_ts=thread_ts,
+            metadata={
+                "event_type": "chat-gpt-convo",
+                "event_payload": {"messages": system_messages, "user": user},
+            },
+            content=intermediate_steps_table_file_txt,
+            filename="intermediate_steps.txt"  # the filename that will be displayed in Slack
+        )
+        print(f"post_wip_message_with_attachment, intermediate_steps.txt, done")
 
     # ERROR MSG
     if len(json_obj) == 0 or not json_obj:
