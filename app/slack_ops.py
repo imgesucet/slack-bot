@@ -78,6 +78,7 @@ def post_wip_message_with_attachment(
         json_obj = loading_text.get("result", None)
         base64_encoded_chart_image = loading_text.get("base64_encoded_chart_image", None)
         intermediate_steps = loading_text.get("intermediate_steps", [])
+        ai_response = loading_text.get("ai_response", "")
     except Exception as e:
         print(f"post_wip_message_with_attachment, error={e}")
         sql = None
@@ -85,6 +86,7 @@ def post_wip_message_with_attachment(
         json_obj = None
         base64_encoded_chart_image = None
         intermediate_steps = []
+        ai_response = ""
 
     print(f"post_wip_message_with_attachment, base64_encoded_chart_image={base64_encoded_chart_image}")
 
@@ -122,11 +124,11 @@ def post_wip_message_with_attachment(
             },
         )
 
-    if score:
+    if ai_response or score:
         client.chat_postMessage(
             channel=channel,
             thread_ts=thread_ts,
-            text="Calculated score: "+str(score),
+            text=ai_response+" The AI Calculated score for this answer is: "+str(score),
             metadata={
                 "event_type": "chat-gpt-convo",
                 "event_payload": {"messages": system_messages, "user": user},
