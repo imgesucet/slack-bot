@@ -74,6 +74,10 @@ features:
       description: Get a list of the queries you have used recently [skip,limit]
       usage_hint: "[0,100]"
       should_escape: false
+    - command: /dset_debug
+      description: Set debug mode on or off
+      usage_hint: "[true]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

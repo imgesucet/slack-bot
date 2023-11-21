@@ -71,6 +71,7 @@ def post_wip_message_with_attachment(
         loading_text: list,
         messages: List[Dict[str, str]],
         user: str,
+        context: BoltContext,
 ):
     try:
         sql = loading_text.get("sql_query", None)
@@ -87,6 +88,8 @@ def post_wip_message_with_attachment(
         base64_encoded_chart_image = None
         intermediate_steps = []
         ai_response = ""
+
+    debug = context.get("debug")
 
     print(f"post_wip_message_with_attachment, base64_encoded_chart_image={base64_encoded_chart_image}")
 
@@ -173,7 +176,7 @@ def post_wip_message_with_attachment(
             filename="data.png"  # the filename that will be displayed in Slack
         )
 
-    if len(intermediate_steps) > 0:
+    if debug == "true" and len(intermediate_steps) > 0:
         intermediate_steps_table = json.dumps(intermediate_steps, indent=4)  # 'your_data' is your JSON data
         intermediate_steps_table_file_txt = io.BytesIO(intermediate_steps_table.encode('utf-8')).getvalue()
         client.files_upload_v2(

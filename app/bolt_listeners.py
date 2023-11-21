@@ -29,7 +29,8 @@ from app.slack_ops import (
     update_wip_message, post_wip_message_with_attachment,
 )
 
-from app.utils import redact_string, fetch_data_from_genieapi, DEFAULT_LOADING_TEXT, DEFAULT_ERROR_TEXT
+from app.utils import redact_string, fetch_data_from_genieapi, DEFAULT_LOADING_TEXT, DEFAULT_ERROR_TEXT, \
+    DEFAULT_ERROR_TEXT_AUTH
 
 
 #
@@ -202,6 +203,7 @@ def respond_to_app_mention(
             loading_text=loading_text,
             messages=messages,
             user=user_id,
+            context=context,
         )
 
     except Timeout as e:
@@ -395,6 +397,7 @@ def respond_to_new_message(
             loading_text=loading_text,
             messages=messages,
             user=user_id,
+            context=context,
         )
 
     except Timeout as e:
@@ -408,11 +411,18 @@ def respond_to_new_message(
     except Exception as e:
         text = f"bolt_listeners.py, Exception, Failed to process request: {e}"
         logger.exception(text)
-        client.chat_postMessage(
-            channel=context.channel_id,
-            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            text=DEFAULT_ERROR_TEXT,
-        )
+        if f"{e}" == "USER_NOT_AUTHORIZED":
+            client.chat_postMessage(
+                channel=context.channel_id,
+                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+                text=DEFAULT_ERROR_TEXT_AUTH,
+            )
+        else:
+            client.chat_postMessage(
+                channel=context.channel_id,
+                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+                text=DEFAULT_ERROR_TEXT,
+            )
 
 
 def register_listeners(app: App):
@@ -475,6 +485,7 @@ def preview_table(context, client, payload, value):
         loading_text=loading_text,
         messages=messages,
         user=user_id,
+        context=context,
     )
 
 
@@ -505,6 +516,7 @@ def suggest_table(context, client, payload, value):
         loading_text=loading_text,
         messages=messages,
         user=user_id,
+        context=context,
     )
 
 
@@ -532,6 +544,7 @@ def predict_table(context, client, payload, value):
         loading_text=loading_text,
         messages=messages,
         user=user_id,
+        context=context,
     )
 
 
@@ -559,4 +572,5 @@ def suggest_tables(context, client, payload, value):
         loading_text=loading_text,
         messages=messages,
         user=user_id,
+        context=context,
     )

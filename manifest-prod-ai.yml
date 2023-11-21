@@ -90,6 +90,11 @@ features:
       usage_hint: "[0,100]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /set_debug
+      description: Set debug mode on or off
+      usage_hint: "[true]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.opengenie.ai/slack/oauth_redirect

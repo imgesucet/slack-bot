@@ -16,6 +16,7 @@ import requests
 
 DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
 DEFAULT_ERROR_TEXT = ":warning: No results were returned from your query. Please review the generated SQL and the associated table, then try again."
+DEFAULT_ERROR_TEXT_AUTH = ":warning: Your request was not authorized. Please review the installation steps, then try again."
 
 
 def redact_string(input_string: str) -> str:
@@ -105,20 +106,20 @@ def fetch_data_from_genieapi(
     while retries < MAX_RETRIES:
         response = requests.get(endpoint_url, headers=headers, params=PARAMS_DEFAULT)
 
+        print(
+            f"fetch_data_from_genieapi, response.status_code={response.status_code}, endpoint_url={endpoint_url}, headers={headers}, params={PARAMS_DEFAULT}")
+
         # If status code is below 299, return the JSON response
         if response.status_code < 299:
             return response.json()
 
-        # If status code is between 400 (inclusive) and 500 (exclusive), raise an exception and stop
-        elif 400 <= response.status_code < 500:
-            response.raise_for_status()
+        elif 401 >= response.status_code <= 403:
+            raise Exception("USER_NOT_AUTHORIZED")
 
         # If status code is 500 or above, retry the request
-        elif response.status_code >= 500:
+        else:
             retries += 1
             time.sleep(DELAY_FACTOR ** retries)  # exponential backoff
-        else:
-            break
 
     # If maximum retries are reached, raise an exception
     raise Exception("Max retries reached without a successful response")
