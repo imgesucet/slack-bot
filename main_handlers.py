@@ -557,13 +557,11 @@ def handle_set_debug_func(ack, command, respond, context: BoltContext, logger: l
 def handle_query_selected_action(ack, context, client, payload, respond, id):
     ack()
     api_key = context["api_key"]
-    db_url = context["db_url"]
-    db_schema = context.get("db_schema")
     team_id = context.team_id
     user_id = context.user_id
 
     respond(
-        text=f":{DEFAULT_LOADING_TEXT},  db_url={db_url}, db_schema={db_schema}, chat_history_id={id}")  # Respond to the command
+        text=f":{DEFAULT_LOADING_TEXT},  chat_history_id={id}")  # Respond to the command
 
     loading_text = fetch_data_from_genieapi(api_key=api_key,
                                             endpoint="/get_my_chat_history",
@@ -571,8 +569,6 @@ def handle_query_selected_action(ack, context, client, payload, respond, id):
                                             user_id=user_id,
                                             id=id,
                                             execute_sql=True,
-                                            resourcename=db_url,
-                                            db_schema=db_schema,
                                             )
 
     is_in_dm_with_bot = True

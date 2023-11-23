@@ -30,7 +30,7 @@ from app.slack_ops import (
 )
 
 from app.utils import redact_string, fetch_data_from_genieapi, DEFAULT_LOADING_TEXT, DEFAULT_ERROR_TEXT, \
-    DEFAULT_ERROR_TEXT_AUTH
+    DEFAULT_ERROR_TEXT_AUTH, DEFAULT_ERROR_TEXT_ERR
 
 
 #
@@ -194,6 +194,7 @@ def respond_to_app_mention(
                                                 user_id=context.user_id,
                                                 db_schema=db_schema,
                                                 ai_engine=ai_engine,
+                                                execute_sql=False,
                                                 )
 
         post_wip_message_with_attachment(
@@ -206,6 +207,28 @@ def respond_to_app_mention(
             context=context,
         )
 
+        chat_history_id = loading_text.get("chat_history_id", None)
+        # print(f"respond_to_new_message, chat_history_id={chat_history_id}, loading_text={loading_text}")
+        if chat_history_id:
+            loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                    endpoint="/get_my_chat_history",
+                                                    id=chat_history_id,
+                                                    execute_sql=True,
+                                                    team_id=context.team_id,
+                                                    user_id=context.user_id,
+                                                    is_generate_code=True,
+                                                    )
+            post_wip_message_with_attachment(
+                client=client,
+                channel=context.channel_id,
+                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+                loading_text=loading_text,
+                messages=messages,
+                user=user_id,
+                context=context,
+            )
+
+
     except Timeout as e:
         text = f"bolt_listeners.py, Timeout, Failed to process request: {e}"
         logger.exception(text)
@@ -217,11 +240,18 @@ def respond_to_app_mention(
     except Exception as e:
         text = f"bolt_listeners.py, Exception, Failed to process request: {e}"
         logger.exception(text)
-        client.chat_postMessage(
-            channel=context.channel_id,
-            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            text=DEFAULT_ERROR_TEXT,
-        )
+        if f"{e}" == "USER_NOT_AUTHORIZED":
+            client.chat_postMessage(
+                channel=context.channel_id,
+                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+                text=DEFAULT_ERROR_TEXT_AUTH,
+            )
+        else:
+            client.chat_postMessage(
+                channel=context.channel_id,
+                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+                text=DEFAULT_ERROR_TEXT_ERR,
+            )
 
 
 def respond_to_new_message(
@@ -388,6 +418,7 @@ def respond_to_new_message(
                                                 user_id=context.user_id,
                                                 db_schema=db_schema,
                                                 ai_engine=ai_engine,
+                                                execute_sql=False,
                                                 )
 
         post_wip_message_with_attachment(
@@ -399,6 +430,27 @@ def respond_to_new_message(
             user=user_id,
             context=context,
         )
+
+        chat_history_id = loading_text.get("chat_history_id", None)
+        # print(f"respond_to_new_message, chat_history_id={chat_history_id}, loading_text={loading_text}")
+        if chat_history_id:
+            loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                    endpoint="/get_my_chat_history",
+                                                    id=chat_history_id,
+                                                    execute_sql=True,
+                                                    team_id=context.team_id,
+                                                    user_id=context.user_id,
+                                                    is_generate_code=True,
+                                                    )
+            post_wip_message_with_attachment(
+                client=client,
+                channel=context.channel_id,
+                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+                loading_text=loading_text,
+                messages=messages,
+                user=user_id,
+                context=context,
+            )
 
     except Timeout as e:
         text = f"bolt_listeners.py, Timeout, Failed to process request: {e}"
@@ -421,7 +473,7 @@ def respond_to_new_message(
             client.chat_postMessage(
                 channel=context.channel_id,
                 thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-                text=DEFAULT_ERROR_TEXT,
+                text=DEFAULT_ERROR_TEXT_ERR,
             )
 
 

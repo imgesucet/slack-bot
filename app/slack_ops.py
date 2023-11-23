@@ -80,6 +80,7 @@ def post_wip_message_with_attachment(
         base64_encoded_chart_image = loading_text.get("base64_encoded_chart_image", None)
         intermediate_steps = loading_text.get("intermediate_steps", [])
         ai_response = loading_text.get("ai_response", "")
+        chat_history_id = loading_text.get("chat_history_id", "")
     except Exception as e:
         print(f"post_wip_message_with_attachment, error={e}")
         sql = None
@@ -88,11 +89,12 @@ def post_wip_message_with_attachment(
         base64_encoded_chart_image = None
         intermediate_steps = []
         ai_response = ""
+        chat_history_id = ""
 
     debug = context.get("debug")
+    chat_history_id_txt = f"id={chat_history_id}, "
 
     print(f"post_wip_message_with_attachment, base64_encoded_chart_image={base64_encoded_chart_image}")
-
 
     table = json_to_slack_table(json_obj)
 
@@ -116,29 +118,32 @@ def post_wip_message_with_attachment(
 
     system_messages = [msg for msg in messages if msg["role"] == "system"]
 
+    if ai_response or score:
+        score_msg = ""
+        if score > 0:
+            score_msg = " The AI Calculated score for this answer is: " + str(score)
+        client.chat_postMessage(
+            channel=channel,
+            thread_ts=thread_ts,
+            text=chat_history_id_txt + ai_response + score_msg,
+            metadata={
+                "event_type": "chat-gpt-convo",
+                "event_payload": {"messages": system_messages, "user": user},
+            },
+        )
+
     if sql:
         client.chat_postMessage(
             channel=channel,
             thread_ts=thread_ts,
-            text=sql,
+            text=chat_history_id_txt + "```" + sql + "```",
             metadata={
                 "event_type": "chat-gpt-convo",
                 "event_payload": {"messages": system_messages, "user": user},
             },
         )
 
-    if ai_response or score:
-        client.chat_postMessage(
-            channel=channel,
-            thread_ts=thread_ts,
-            text=ai_response+" The AI Calculated score for this answer is: "+str(score),
-            metadata={
-                "event_type": "chat-gpt-convo",
-                "event_payload": {"messages": system_messages, "user": user},
-            },
-        )
-
-    if file_json_size > 0 and len(json_obj) > 0:
+    if file_json_size > 0 and (json_obj and len(json_obj) > 0):
         client.files_upload_v2(
             channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
             thread_ts=thread_ts,
@@ -147,11 +152,11 @@ def post_wip_message_with_attachment(
                 "event_payload": {"messages": system_messages, "user": user},
             },
             content=file_json,
-            filename="data.json"  # the filename that will be displayed in Slack
+            filename=f"{chat_history_id}_data.json"  # the filename that will be displayed in Slack
         )
         print(f"post_wip_message_with_attachment, data.json, done")
 
-    if file_txt_size > 0 and len(json_obj) > 0:
+    if file_txt_size > 0 and (json_obj and len(json_obj) > 0):
         client.files_upload_v2(
             channels=channel,  # replace 'channel_id' with the ID of the channel you want to post to
             thread_ts=thread_ts,
@@ -160,7 +165,7 @@ def post_wip_message_with_attachment(
                 "event_payload": {"messages": system_messages, "user": user},
             },
             content=file_txt,
-            filename="data.txt"  # the filename that will be displayed in Slack
+            filename=f"{chat_history_id}_data.txt"  # the filename that will be displayed in Slack
         )
         print(f"post_wip_message_with_attachment, data.txt, done")
 
@@ -173,7 +178,7 @@ def post_wip_message_with_attachment(
                 "event_payload": {"messages": system_messages, "user": user},
             },
             content=file_png,
-            filename="data.png"  # the filename that will be displayed in Slack
+            filename=f"{chat_history_id}_data.png"  # the filename that will be displayed in Slack
         )
 
     if debug == "true" and len(intermediate_steps) > 0:
@@ -187,16 +192,16 @@ def post_wip_message_with_attachment(
                 "event_payload": {"messages": system_messages, "user": user},
             },
             content=intermediate_steps_table_file_txt,
-            filename="intermediate_steps.txt"  # the filename that will be displayed in Slack
+            filename=f"{chat_history_id}_intermediate_steps.txt"  # the filename that will be displayed in Slack
         )
         print(f"post_wip_message_with_attachment, intermediate_steps.txt, done")
 
     # ERROR MSG
-    if len(json_obj) == 0 or not json_obj:
+    if (len(sql) == 0 or not sql) and (len(json_obj) == 0 or not json_obj):
         client.chat_postMessage(
             channel=channel,
             thread_ts=thread_ts,
-            text=DEFAULT_ERROR_TEXT,
+            text=chat_history_id_txt + DEFAULT_ERROR_TEXT,
             metadata={
                 "event_type": "chat-gpt-convo",
                 "event_payload": {"messages": system_messages, "user": user},
