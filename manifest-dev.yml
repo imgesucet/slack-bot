@@ -78,6 +78,10 @@ features:
       description: Set debug mode on or off
       usage_hint: "[true]"
       should_escape: false
+    - command: /dset_experimental_features
+      description: Set experimental features mode on or off
+      usage_hint: "[true]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

@@ -16,7 +16,7 @@ import requests
 
 DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
 DEFAULT_ERROR_TEXT = ":warning: No results were returned from your query. Please review the generated SQL and the associated table, then try again."
-DEFAULT_ERROR_TEXT_ERR = ":warning: An error were returned from your query. Please review the generated SQL and the associated table, then try again. If the issue persists, please contact Genie support."
+DEFAULT_ERROR_TEXT_ERR = ":warning: We encountered an error while processing your query. Please review the generated SQL and the associated table, then try again. If the issue persists, please contact Genie support."
 DEFAULT_ERROR_TEXT_AUTH = ":warning: Your request was not authorized. Please review the installation steps, then try again."
 
 
@@ -58,6 +58,7 @@ def fetch_data_from_genieapi(
         ai_engine=None,
         id=None,
         execute_sql=None,
+        experimental_features=None
 ):
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
@@ -74,7 +75,7 @@ def fetch_data_from_genieapi(
 
     # Use arguments if provided, otherwise default
     print(
-        f"fetch_data_from_genieapi, api_key={api_key}, endpoint={endpoint}, text_query={text_query}, table_name={table_name}, resourcename={resourcename}")
+        f"fetch_data_from_genieapi, api_key={api_key}, endpoint={endpoint}, text_query={text_query}, table_name={table_name}, resourcename={resourcename}, experimental_features={experimental_features}")
     endpoint_url = URL_DEFAULT + endpoint
     if resourcename is not None:
         PARAMS_DEFAULT["resourcename"] = resourcename
@@ -96,6 +97,8 @@ def fetch_data_from_genieapi(
         PARAMS_DEFAULT["id"] = id
     if execute_sql is not None:
         PARAMS_DEFAULT["execute_sql"] = execute_sql
+    if experimental_features is not None:
+        PARAMS_DEFAULT["is_experimental"] = experimental_features
 
     headers = {"X-API-Key": api_key}
 

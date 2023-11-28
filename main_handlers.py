@@ -63,6 +63,7 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
                 context["ai_engine"] = config.get("ai_engine")
                 context["chat_history_size"] = config.get("chat_history_size")
                 context["debug"] = config.get("debug")
+                context["experimental_features"] = config.get("experimental_features")
             else:
                 # The legacy data format
                 context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
@@ -554,6 +555,24 @@ def handle_set_debug_func(ack, command, respond, context: BoltContext, logger: l
     respond(text=f"Debug set to: {value}")  # Respond to the command
 
 
+def handle_set_experimental_features_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
+                                          s3_client,
+                                          AWS_STORAGE_BUCKET_NAME):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"handle_set_experimental_features_func!!!, value={value}")
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    if value is None or value == "":
+        respond(text="You must provide a value. eg /set_experimental_features true")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("experimental_features", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"Experimental features set to: {value}")  # Respond to the command
+
+
 def handle_query_selected_action(ack, context, client, payload, respond, id):
     ack()
     api_key = context["api_key"]
@@ -677,6 +696,7 @@ def get_bucket_key(context, key, logger):
             or key == "db_schema" \
             or key == "ai_engine" \
             or key == "debug" \
+            or key == "experimental_features" \
             or key == "chat_history_size":
         bucket_key = context.team_id + "_" + user_id
     else:

@@ -95,6 +95,11 @@ features:
       usage_hint: "[true]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /set_experimental_features
+      description: Set experimental features mode on or off
+      usage_hint: "[true]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.opengenie.ai/slack/oauth_redirect

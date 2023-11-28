@@ -160,13 +160,12 @@ def respond_to_app_mention(
             )
             last_message = msg_text
 
-
-
         api_key = None
         table_name = context.get("db_table")
         db_url = context.get("db_url")
         db_schema = context.get("db_schema")
         ai_engine = context.get("ai_engine")
+        experimental_features = context.get("experimental_features")
 
         chat_history_size = context.get("chat_history_size")
 
@@ -195,6 +194,7 @@ def respond_to_app_mention(
                                                 db_schema=db_schema,
                                                 ai_engine=ai_engine,
                                                 execute_sql=False,
+                                                experimental_features=experimental_features,
                                                 )
 
         post_wip_message_with_attachment(
@@ -393,6 +393,7 @@ def respond_to_new_message(
         db_schema = context.get("db_schema")
         ai_engine = context.get("ai_engine")
         chat_history_size = context.get("chat_history_size")
+        experimental_features = context.get("experimental_features")
 
         text_query = last_message["text"]
 
@@ -419,6 +420,7 @@ def respond_to_new_message(
                                                 db_schema=db_schema,
                                                 ai_engine=ai_engine,
                                                 execute_sql=False,
+                                                experimental_features=experimental_features
                                                 )
 
         post_wip_message_with_attachment(
@@ -473,7 +475,7 @@ def respond_to_new_message(
             client.chat_postMessage(
                 channel=context.channel_id,
                 thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-                text=DEFAULT_ERROR_TEXT_ERR,
+                text=f"{DEFAULT_ERROR_TEXT_ERR}, status",
             )
 
 

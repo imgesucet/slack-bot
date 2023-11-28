@@ -20,7 +20,7 @@ from main_handlers import handle_use_db_func, handle_suggest_func, handle_previe
     set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func, handle_predict_func, \
     render_home_tab_func, handle_login_func, handle_set_key_func, handle_set_db_schema_func, handle_suggest_tables_func, \
     handle_set_ai_engine_func, handle_get_db_schemas_func, handle_show_queries_func, handle_query_selected_action, \
-    handle_set_debug_func
+    handle_set_debug_func, handle_set_experimental_features_func
 
 if __name__ == "__main__":
     # Create a Flask application
@@ -195,6 +195,13 @@ if __name__ == "__main__":
     @app.command(f"/{PREFIX}set_debug")
     def handle_set_debug(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
         threading.Thread(target=handle_set_debug_func,
+                         args=(ack, command, respond, context, logger, client, s3_client,
+                               AWS_STORAGE_BUCKET_NAME)).start()
+
+
+    @app.command(f"/{PREFIX}set_experimental_features")
+    def handle_set_experimental_features(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
+        threading.Thread(target=handle_set_experimental_features_func,
                          args=(ack, command, respond, context, logger, client, s3_client,
                                AWS_STORAGE_BUCKET_NAME)).start()
 
