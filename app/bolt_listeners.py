@@ -173,7 +173,7 @@ def respond_to_app_mention(
             client=client,
             channel=context.channel_id,
             thread_ts=payload["ts"],
-            loading_text=DEFAULT_LOADING_TEXT + f" db_url={db_url}, db_table={db_table}, db_schema={db_schema}, ai_engine={ai_engine}",
+            loading_text=DEFAULT_LOADING_TEXT + f" db_url={db_url}, db_table={db_table}, db_schema={db_schema}, ai_engine={ai_engine}, experimental_features={experimental_features}",
             messages=messages,
             user=context.user_id,
         )
@@ -401,7 +401,7 @@ def respond_to_new_message(
             client=client,
             channel=context.channel_id,
             thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            loading_text=DEFAULT_LOADING_TEXT + f" db_url={db_url}, db_table={db_table}, db_schema={db_schema}, ai_engine={ai_engine}",
+            loading_text=DEFAULT_LOADING_TEXT + f" db_url={db_url}, db_table={db_table}, db_schema={db_schema}, ai_engine={ai_engine}, experimental_features={experimental_features}",
             messages=messages,
             user=context.user_id,
         )
