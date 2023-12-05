@@ -1,6 +1,7 @@
 import json
 import logging
 import botocore
+import traceback
 
 import boto3 as boto3
 from slack_bolt import BoltContext
@@ -118,6 +119,7 @@ def handle_set_db_table_func(ack, command, respond, context: BoltContext, logger
     try:
         preview_table(context, client, payload, value)
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to run preview for table")  # Respond to the command
 
@@ -185,6 +187,7 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
         )
 
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to get DB tables")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
@@ -251,6 +254,7 @@ def handle_get_db_schemas_func(ack, command, respond, context: BoltContext, logg
         )
 
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to get DB Schemas")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
@@ -284,6 +288,7 @@ def handle_set_db_url_func(ack, command, respond, context: BoltContext, logger: 
         respond(text=f"DB URL set to: {redact_string(resource_name)}")  # Respond to the command
 
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to set DB URL to: {redact_string(value)}")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
@@ -323,6 +328,7 @@ def handle_get_db_urls_func(ack, respond, context: BoltContext, logger: logging.
         respond(blocks=blocks)
 
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to get DB URLs")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
@@ -342,6 +348,7 @@ def handle_preview_func(ack, command, respond, context: BoltContext, logger: log
     try:
         preview_table(context, client, payload, value)
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to run preview for table")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
@@ -362,6 +369,7 @@ def handle_suggest_func(ack, command, respond, context, logger, client, payload)
     try:
         suggest_table(context, client, payload, value)
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to run suggest for table")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
@@ -483,6 +491,7 @@ def handle_predict_func(ack, command, respond, context, logger, client, payload)
     try:
         predict_table(context, client, payload, value)
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to run prediction")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
@@ -503,6 +512,7 @@ def handle_suggest_tables_func(ack, command, respond, context, logger, client, p
     try:
         suggest_tables(context, client, payload, value)
     except Exception as e:
+        traceback.print_exc()
         logger.exception(e)
         respond(text=f"Failed to run handle_suggest_tables_func")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
@@ -661,6 +671,7 @@ def save_s3(
         logger.error(f"save_s3, Encountered an error ClientError, with boto3: {e}")
         return
     except Exception as e:
+        traceback.print_exc()
         logger.error(f"save_s3, Encountered an error Exception, with boto3: {e}")
         return
 
@@ -685,6 +696,7 @@ def delete_s3(
         logger.error(f"delete_s3, Encountered an error ClientError, with boto3: {e}")
         return
     except Exception as e:
+        traceback.print_exc()
         logger.error(f"delete_s3, Encountered an error Exception, with boto3: {e}")
         return
 

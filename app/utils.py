@@ -15,8 +15,8 @@ from app.env import (
 import requests
 
 DEFAULT_LOADING_TEXT = ":hourglass_flowing_sand: Wait a second, please ..."
-DEFAULT_ERROR_TEXT = ":warning: No results were returned from your query. Please review the generated SQL and the associated table, then try again."
-DEFAULT_ERROR_TEXT_ERR = ":warning: We encountered an error while processing your query. Please review the generated SQL and the associated table, then try again. If the issue persists, please contact Genie support."
+DEFAULT_ERROR_TEXT = ":warning: No results were returned from your query. Please review the generated SQL and the associated table/schema, then try again."
+DEFAULT_ERROR_TEXT_ERR = ":warning: We encountered an error while processing your query. Please review the generated SQL and the associated table/schema, then try again. If the issue persists, please contact Genie support."
 DEFAULT_ERROR_TEXT_AUTH = ":warning: Your request was not authorized. Please review the installation steps, then try again."
 
 
