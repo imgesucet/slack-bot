@@ -3,6 +3,7 @@ import logging
 import os
 import re
 import threading
+import traceback
 
 from slack_sdk.web import WebClient
 from slack_sdk.http_retry.builtin_handlers import RateLimitErrorRetryHandler
@@ -81,6 +82,7 @@ def register_revocation_handlers(app: App):
                         user_id=user_id,
                     )
                 except Exception as e:
+                    traceback.print_exc()
                     logger.error(
                         f"Failed to installation_store.delete_installation: (team_id: {context.team_id}, enterprise_id:{context.enterprise_id}, user_id={user_id}, error: {e})"
                     )
@@ -92,12 +94,14 @@ def register_revocation_handlers(app: App):
                     team_id=context.team_id,
                 )
             except Exception as e:
+                traceback.print_exc()
                 logger.error(
                     f"Failed to delete_bot: (team_id: {context.team_id}, enterprise_id:{context.enterprise_id}, error: {e})"
                 )
             try:
                 s3_client.delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
             except Exception as e:
+                traceback.print_exc()
                 logger.error(
                     f"Failed to delete an OpenAI auth key: (team_id: {context.team_id}, error: {e})"
                 )
@@ -114,12 +118,14 @@ def register_revocation_handlers(app: App):
                 team_id=context.team_id,
             )
         except Exception as e:
+            traceback.print_exc()
             logger.error(
                 f"Failed to delete_bot: (team_id: {context.team_id}, enterprise_id:{context.enterprise_id}, error: {e})"
             )
         try:
             s3_client.delete_object(Bucket=AWS_STORAGE_BUCKET_NAME, Key=context.team_id)
         except Exception as e:
+            traceback.print_exc()
             logger.error(
                 f"Failed to delete an OpenAI auth key: (team_id: {context.team_id}, error: {e})"
             )
@@ -378,6 +384,7 @@ def slack_configure():
     try:
         validate_api_key_registration(view, context, logger)
     except Exception as e:
+        traceback.print_exc()
         return jsonify({'status': 'error', 'message': str(e)})
 
     try:

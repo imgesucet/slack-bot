@@ -1,4 +1,5 @@
 import logging
+import traceback
 
 from app.utils import fetch_data_from_genieapi
 from slack_bolt import BoltContext
@@ -20,6 +21,7 @@ def validate_api_key_registration(view: dict, context: BoltContext, logger: logg
         if isauth["message"] != "ok":
             raise Exception("Invalid Genie API KEY")
     except Exception as e:
+        traceback.print_exc()
         text = "This API key seems to be invalid"
         logger.exception(e)
         raise Exception(text)
@@ -38,4 +40,5 @@ def save_api_key_registration(
     try:
         save_s3("api_key", api_key, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
     except Exception as e:
+        traceback.print_exc()
         raise Exception(f"Failed to save Genie API KEY, e={e}")

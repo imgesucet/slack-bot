@@ -1,7 +1,7 @@
 import base64
 import io
 import json
-import os
+import traceback
 from typing import Optional
 from typing import List, Dict
 
@@ -82,6 +82,7 @@ def post_wip_message_with_attachment(
         ai_response = loading_text.get("ai_response", "")
         chat_history_id = loading_text.get("chat_history_id", "")
     except Exception as e:
+        traceback.print_exc()
         print(f"post_wip_message_with_attachment, error={e}")
         sql = None
         score = None
@@ -197,7 +198,7 @@ def post_wip_message_with_attachment(
         print(f"post_wip_message_with_attachment, intermediate_steps.txt, done")
 
     # ERROR MSG
-    if (len(sql) == 0 or not sql) and (len(json_obj) == 0 or not json_obj):
+    if (sql and len(sql) == 0) and (json_obj and len(json_obj) == 0):
         client.chat_postMessage(
             channel=channel,
             thread_ts=thread_ts,
@@ -234,6 +235,7 @@ def json_to_slack_table(json_array):
         table_string += "```"  # end with closing ```
         return table_string
     except Exception as e:
+        traceback.print_exc()
         print(f"json_to_slack_table, error={e}")
         return ""
 

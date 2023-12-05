@@ -1,8 +1,7 @@
 import logging
-import os
 import re
 import time
-import requests
+import traceback
 
 from openai.error import Timeout
 from slack_bolt import App, Ack, BoltContext, BoltResponse
@@ -230,6 +229,7 @@ def respond_to_app_mention(
 
 
     except Timeout as e:
+        traceback.print_exc()
         text = f"bolt_listeners.py, Timeout, Failed to process request: {e}"
         logger.exception(text)
         client.chat_postMessage(
@@ -238,6 +238,7 @@ def respond_to_app_mention(
             text=DEFAULT_ERROR_TEXT,
         )
     except Exception as e:
+        traceback.print_exc()
         text = f"bolt_listeners.py, Exception, Failed to process request: {e}"
         logger.exception(text)
         if f"{e}" == "USER_NOT_AUTHORIZED":
@@ -455,6 +456,7 @@ def respond_to_new_message(
             )
 
     except Timeout as e:
+        traceback.print_exc()
         text = f"bolt_listeners.py, Timeout, Failed to process request: {e}"
         logger.exception(text)
         client.chat_postMessage(
@@ -463,6 +465,7 @@ def respond_to_new_message(
             text=DEFAULT_ERROR_TEXT,
         )
     except Exception as e:
+        traceback.print_exc()
         text = f"bolt_listeners.py, Exception, Failed to process request: {e}"
         logger.exception(text)
         if f"{e}" == "USER_NOT_AUTHORIZED":

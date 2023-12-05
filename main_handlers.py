@@ -44,6 +44,7 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
                     "temperature", DEFAULT_OPENAI_TEMPERATURE
                 )
         except s3_client.exceptions.NoSuchKey as e:
+            traceback.print_exc()
             logger.error(f"set_s3_openai_api_key, team_id, key={key}, error={e}")
 
         user_id = context.actor_user_id or context.user_id
@@ -70,6 +71,7 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
                 context["OPENAI_MODEL"] = DEFAULT_OPENAI_MODEL
                 context["OPENAI_TEMPERATURE"] = DEFAULT_OPENAI_TEMPERATURE
         except s3_client.exceptions.NoSuchKey as e:
+            traceback.print_exc()
             logger.error(f"set_s3_openai_api_key, team_id+user_id, key={key}, error={e}")
 
         context["OPENAI_API_TYPE"] = DEFAULT_OPENAI_API_TYPE
@@ -653,6 +655,7 @@ def save_s3(
             body = response['Body'].read().decode('utf-8')
             data = json.loads(body)
         except s3_client.exceptions.NoSuchKey:
+            traceback.print_exc()
             # If the object doesn't exist, create a new one
             data = {}
 
@@ -667,6 +670,7 @@ def save_s3(
         )
         return
     except botocore.exceptions.ClientError as e:
+        traceback.print_exc()
         # Specific exception handling for boto3's client errors
         logger.error(f"save_s3, Encountered an error ClientError, with boto3: {e}")
         return
@@ -692,6 +696,7 @@ def delete_s3(
             Key=bucket_key,
         )
     except botocore.exceptions.ClientError as e:
+        traceback.print_exc()
         # Specific exception handling for boto3's client errors
         logger.error(f"delete_s3, Encountered an error ClientError, with boto3: {e}")
         return
