@@ -14,11 +14,6 @@ from app.bolt_listeners import register_listeners, before_authorize
 from app.env import (
     SLACK_APP_LOG_LEVEL,
 )
-from app.slack_ops import (
-    build_home_tab,
-    DEFAULT_HOME_TAB_MESSAGE,
-    DEFAULT_HOME_TAB_CONFIGURE_LABEL
-)
 
 import boto3
 
@@ -369,6 +364,10 @@ def handle_modal_submission(ack, view: dict, context: BoltContext, logger):
 slack_handler = SlackRequestHandler(app=app)
 
 flask_app = Flask(__name__)
+# Disable request logging for the Flask app
+werkzeug_logger = logging.getLogger('werkzeug')
+werkzeug_logger.setLevel(logging.ERROR)
+
 logger = logging.getLogger()
 logger.setLevel(logging.ERROR)
 
