@@ -370,7 +370,7 @@ slack_handler = SlackRequestHandler(app=app)
 
 flask_app = Flask(__name__)
 logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.ERROR)
 
 
 @flask_app.route("/slack/configure", methods=["POST"])
