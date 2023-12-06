@@ -8,6 +8,7 @@ from slack_bolt import App, Ack, BoltContext, BoltResponse
 from slack_bolt.request.payload_utils import is_event
 from slack_sdk.web import WebClient
 
+from app.api_funcs import get_language_to_sql
 from app.env import (
     OPENAI_TIMEOUT_SECONDS,
     SYSTEM_TEXT,
@@ -106,7 +107,6 @@ def respond_to_app_mention(
     messages = [{"role": "system", "content": system_text}]
 
     api_key = context.get("api_key")
-    db_table = context.get("db_table")
     is_in_dm_with_bot = payload.get("channel_type") == "im"
 
     try:
@@ -159,73 +159,15 @@ def respond_to_app_mention(
             )
             last_message = msg_text
 
-        api_key = None
-        table_name = context.get("db_table")
-        db_url = context.get("db_url")
-        db_schema = context.get("db_schema")
-        ai_engine = context.get("ai_engine")
-        experimental_features = context.get("experimental_features")
-
-        chat_history_size = context.get("chat_history_size")
-
-        post_wip_message(
-            client=client,
-            channel=context.channel_id,
-            thread_ts=payload["ts"],
-            loading_text=DEFAULT_LOADING_TEXT + f" db_url={db_url}, db_table={db_table}, db_schema={db_schema}, ai_engine={ai_engine}, experimental_features={experimental_features}",
-            messages=messages,
-            user=context.user_id,
-        )
-
         text_query = last_message
-
-        logger.info(
-            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, table_name={table_name}, text_query={text_query}, chat_history_size={chat_history_size}")
-
-        loading_text = fetch_data_from_genieapi(api_key=api_key,
-                                                endpoint="/language_to_sql",
-                                                text_query=text_query,
-                                                table_name=table_name,
-                                                resourcename=db_url,
-                                                chat_history_size=chat_history_size,
-                                                team_id=context.team_id,
-                                                user_id=context.user_id,
-                                                db_schema=db_schema,
-                                                ai_engine=ai_engine,
-                                                execute_sql=False,
-                                                experimental_features=experimental_features,
-                                                )
-
-        post_wip_message_with_attachment(
-            client=client,
-            channel=context.channel_id,
-            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            loading_text=loading_text,
-            messages=messages,
-            user=user_id,
+        get_language_to_sql(
             context=context,
+            client=client,
+            payload=payload,
+            messages=messages,
+            logger=logger,
+            text_query=text_query
         )
-
-        chat_history_id = loading_text.get("chat_history_id", None)
-        # print(f"respond_to_new_message, chat_history_id={chat_history_id}, loading_text={loading_text}")
-        if chat_history_id:
-            loading_text = fetch_data_from_genieapi(api_key=api_key,
-                                                    endpoint="/get_my_chat_history",
-                                                    id=chat_history_id,
-                                                    execute_sql=True,
-                                                    team_id=context.team_id,
-                                                    user_id=context.user_id,
-                                                    is_generate_code=True,
-                                                    )
-            post_wip_message_with_attachment(
-                client=client,
-                channel=context.channel_id,
-                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-                loading_text=loading_text,
-                messages=messages,
-                user=user_id,
-                context=context,
-            )
 
 
     except Timeout as e:
@@ -388,72 +330,15 @@ def respond_to_new_message(
                 }
             )
 
-        table_name = context.get("db_table")
-        db_url = context.get("db_url")
-        db_table = context.get("db_table")
-        db_schema = context.get("db_schema")
-        ai_engine = context.get("ai_engine")
-        chat_history_size = context.get("chat_history_size")
-        experimental_features = context.get("experimental_features")
-
         text_query = last_message["text"]
-
-        post_wip_message(
-            client=client,
-            channel=context.channel_id,
-            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            loading_text=DEFAULT_LOADING_TEXT + f" db_url={db_url}, db_table={db_table}, db_schema={db_schema}, ai_engine={ai_engine}, experimental_features={experimental_features}",
-            messages=messages,
-            user=context.user_id,
-        )
-
-        logger.info(
-            f"respond_to_new_message, fetch_data_from_genieapi, db_url={db_url}, db_table={table_name}, db_schema={db_schema}, ai_engine={ai_engine}, text_query={text_query}, chat_history_size={chat_history_size}")
-
-        loading_text = fetch_data_from_genieapi(api_key=api_key,
-                                                endpoint="/language_to_sql",
-                                                text_query=text_query,
-                                                table_name=table_name,
-                                                resourcename=db_url,
-                                                chat_history_size=chat_history_size,
-                                                team_id=context.team_id,
-                                                user_id=context.user_id,
-                                                db_schema=db_schema,
-                                                ai_engine=ai_engine,
-                                                execute_sql=False,
-                                                experimental_features=experimental_features
-                                                )
-
-        post_wip_message_with_attachment(
-            client=client,
-            channel=context.channel_id,
-            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-            loading_text=loading_text,
-            messages=messages,
-            user=user_id,
+        get_language_to_sql(
             context=context,
+            client=client,
+            payload=payload,
+            messages=messages,
+            logger=logger,
+            text_query=text_query
         )
-
-        chat_history_id = loading_text.get("chat_history_id", None)
-        # print(f"respond_to_new_message, chat_history_id={chat_history_id}, loading_text={loading_text}")
-        if chat_history_id:
-            loading_text = fetch_data_from_genieapi(api_key=api_key,
-                                                    endpoint="/get_my_chat_history",
-                                                    id=chat_history_id,
-                                                    execute_sql=True,
-                                                    team_id=context.team_id,
-                                                    user_id=context.user_id,
-                                                    is_generate_code=True,
-                                                    )
-            post_wip_message_with_attachment(
-                client=client,
-                channel=context.channel_id,
-                thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
-                loading_text=loading_text,
-                messages=messages,
-                user=user_id,
-                context=context,
-            )
 
     except Timeout as e:
         traceback.print_exc()

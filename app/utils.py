@@ -43,6 +43,43 @@ def redact_string(input_string: str) -> str:
     return output_string
 
 
+def get_space_travel_update(retry_count):
+    messages = [
+        "Compiling the latest AI algorithms... 🤖",
+        "Analyzing quantum neural network patterns... 🌌",
+        "Uploading terabytes of linguistic data... 💾",
+        "Calibrating natural language understanding protocols... 📚",
+        "Enhancing the predictive text synthesis module... 🔮",
+        "Running diagnostics on the conversational context engine... 💬",
+        "Training AI models with intergalactic language data... 🌐",
+        "Optimizing response time for hyperspeed computation... ⚡",
+        "Deploying humor algorithms for enhanced engagement... 😄",
+        "Cross-referencing the universal encyclopedia of knowledge... 📖",
+        "Fine-tuning the empathy and emotion detection circuits... ❤️",
+        "Expanding the AI's creative idea generation unit... 🎨",
+        "Testing the AI's joke generation module... 🤣",
+        "Upgrading the AI's philosophical reasoning abilities... 🤔",
+        "Synchronizing the AI's advanced problem-solving matrix... 🧠",
+        "Implementing latest updates in ethical AI decision-making... ⚖️",
+        "Incorporating the full spectrum of human history data... 🕒",
+        "Enhancing the AI's cultural and social awareness... 🌍",
+        "Preparing to deliver personalized, insightful responses... ✨",
+        "Activating the advanced virtual reality imagination interface... 🌈"
+    ]
+
+    # Make sure the retry_count is within the range of available messages
+    message_index = retry_count % len(messages)
+    return messages[message_index]
+
+
+def is_prime(number):
+    if number <= 1:
+        return False
+    for i in range(2, int(number**0.5) + 1):
+        if number % i == 0:
+            return False
+    return True
+
 def fetch_data_from_genieapi(
         api_key=None,
         endpoint="/language_to_sql",
@@ -58,7 +95,13 @@ def fetch_data_from_genieapi(
         ai_engine=None,
         id=None,
         execute_sql=None,
-        experimental_features=None
+        experimental_features=None,
+        MAX_RETRIES=5,
+        DELAY_FACTOR=0,
+        client=None,
+        channel=None,
+        thread_ts=None,
+
 ):
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
@@ -103,8 +146,6 @@ def fetch_data_from_genieapi(
     headers = {"X-API-Key": api_key}
 
     # Define max retries and delay for exponential backoff
-    MAX_RETRIES = 3
-    DELAY_FACTOR = 2
 
     retries = 0
     while retries < MAX_RETRIES:
@@ -122,8 +163,20 @@ def fetch_data_from_genieapi(
 
         # If status code is 500 or above, retry the request
         else:
+            retrymsg = get_space_travel_update(retries)
+            isprime = is_prime(retries)
+            # print(f"Will retry ?! retrymsg={retrymsg}, isprime={isprime}")
+            if client and channel and thread_ts and isprime:
+                client.chat_postMessage(
+                    channel=channel,
+                    thread_ts=thread_ts,
+                    text=retrymsg,
+                )
             retries += 1
-            time.sleep(DELAY_FACTOR ** retries)  # exponential backoff
+            if DELAY_FACTOR > 0:
+                time.sleep(DELAY_FACTOR ** retries)  # exponential backoff
+            else:
+                time.sleep(10)
 
     # If maximum retries are reached, raise an exception
     raise Exception("Max retries reached without a successful response")
