@@ -525,9 +525,15 @@ def handle_show_queries_func(ack, command, respond, context, logger, client, pay
     api_key = context["api_key"]
     team_id = context.team_id
     user_id = context.user_id
+    db_url = context.get("db_url")
 
-    loading_text = fetch_data_from_genieapi(api_key=api_key, endpoint="/get_my_chat_history", team_id=team_id,
-                                            user_id=user_id)
+    loading_text = fetch_data_from_genieapi(
+        api_key=api_key,
+        endpoint="/get_my_chat_history",
+        team_id=team_id,
+        user_id=user_id,
+        resourcename=db_url
+    )
 
     queries = loading_text["result"]
 
@@ -594,13 +600,14 @@ def handle_query_selected_action(ack, context, client, payload, respond, id):
     respond(
         text=f":{DEFAULT_LOADING_TEXT},  chat_history_id={id}")  # Respond to the command
 
-    loading_text = fetch_data_from_genieapi(api_key=api_key,
-                                            endpoint="/get_my_chat_history",
-                                            team_id=team_id,
-                                            user_id=user_id,
-                                            id=id,
-                                            execute_sql=True,
-                                            )
+    loading_text = fetch_data_from_genieapi(
+        api_key=api_key,
+        endpoint="/get_my_chat_history",
+        team_id=team_id,
+        user_id=user_id,
+        id=id,
+        execute_sql=True,
+    )
 
     is_in_dm_with_bot = True
     messages = []
