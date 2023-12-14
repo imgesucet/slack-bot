@@ -100,6 +100,16 @@ features:
       usage_hint: "[true]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /pset_db_warehouse
+      description: Set DB Warehouse
+      usage_hint: "[warehouse01]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
+    - command: /pget_db_warehouses
+      description: Get DB Warehouses
+      usage_hint: "[bold-sky]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.defytrends.dev/slack/oauth_redirect

@@ -82,6 +82,14 @@ features:
       description: Set experimental features mode on or off
       usage_hint: "[true]"
       should_escape: false
+    - command: /dset_db_warehouse
+      description: Set DB Warehouse
+      usage_hint: "[warehouse01]"
+      should_escape: false
+    - command: /dget_db_warehouses
+      description: Get DB Warehouses
+      usage_hint: "[bold-sky]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

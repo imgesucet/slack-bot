@@ -401,19 +401,22 @@ def preview_table(context, client, payload, value):
     api_key = context["api_key"]
     db_url = context["db_url"]
     db_schema = context.get("db_schema")
+    db_warehouse = context.get("db_warehouse")
     ai_engine = context.get("ai_engine")
 
     table_name = value
     text_query = f"get 10 sample rows for {table_name}"
-    loading_text = fetch_data_from_genieapi(api_key=api_key,
-                                            endpoint="/language_to_sql",
-                                            text_query=text_query,
-                                            table_name=table_name,
-                                            resourcename=db_url,
-                                            is_generate_code=False,
-                                            db_schema=db_schema,
-                                            ai_engine=ai_engine,
-                                            )
+    loading_text = fetch_data_from_genieapi(
+        api_key=api_key,
+        endpoint="/language_to_sql",
+        text_query=text_query,
+        table_name=table_name,
+        resourcename=db_url,
+        is_generate_code=False,
+        db_schema=db_schema,
+        ai_engine=ai_engine,
+        db_warehouse=db_warehouse,
+    )
 
     is_in_dm_with_bot = True
     messages = []

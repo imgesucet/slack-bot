@@ -22,7 +22,8 @@ from main_handlers import handle_use_db_func, handle_suggest_func, handle_previe
     set_s3_openai_api_key_func, handle_help_actions_func, handle_set_chat_history_size_func, handle_predict_func, \
     render_home_tab_func, handle_login_func, handle_set_key_func, handle_set_db_schema_func, handle_suggest_tables_func, \
     handle_set_ai_engine_func, handle_get_db_schemas_func, handle_show_queries_func, handle_query_selected_action, \
-    handle_set_debug_func, handle_set_experimental_features_func
+    handle_set_debug_func, handle_set_experimental_features_func, handle_set_db_warehouse_func, \
+    handle_get_db_warehouses_func
 from main_prod_funcs import validate_api_key_registration, save_api_key_registration
 from slack_handler import SlackRequestHandler
 from slack_s3_oauth_flow import LambdaS3OAuthFlow
@@ -271,6 +272,20 @@ def handle_set_experimental_features(ack, command, respond, context: BoltContext
     threading.Thread(target=handle_set_experimental_features_func,
                      args=(ack, command, respond, context, logger, client, s3_client,
                            AWS_STORAGE_BUCKET_NAME)).start()
+
+
+@app.command(f"/{PREFIX}set_db_warehouse")
+def handle_set_db_warehouse(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
+    threading.Thread(target=handle_set_db_warehouse_func,
+                     args=(ack, command, respond, context, logger, client, s3_client,
+                           AWS_STORAGE_BUCKET_NAME)).start()
+
+
+@app.command(f"/{PREFIX}get_db_warehouses")
+def handle_get_db_warehouses(ack, command, respond, context: BoltContext, logger: logging.Logger, client: WebClient,
+                             payload: dict):
+    threading.Thread(target=handle_get_db_warehouses_func,
+                     args=(ack, command, respond, context, logger, client, payload)).start()
 
 
 @app.action(re.compile("^help:"))

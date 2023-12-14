@@ -75,10 +75,11 @@ def get_space_travel_update(retry_count):
 def is_prime(number):
     if number <= 1:
         return False
-    for i in range(2, int(number**0.5) + 1):
+    for i in range(2, int(number ** 0.5) + 1):
         if number % i == 0:
             return False
     return True
+
 
 def fetch_data_from_genieapi(
         api_key=None,
@@ -101,7 +102,7 @@ def fetch_data_from_genieapi(
         client=None,
         channel=None,
         thread_ts=None,
-
+        db_warehouse=None
 ):
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
@@ -142,6 +143,8 @@ def fetch_data_from_genieapi(
         PARAMS_DEFAULT["execute_sql"] = execute_sql
     if experimental_features is not None:
         PARAMS_DEFAULT["is_experimental"] = experimental_features
+    if db_warehouse is not None:
+        PARAMS_DEFAULT["db_warehouse"] = db_warehouse
 
     headers = {"X-API-Key": api_key}
 

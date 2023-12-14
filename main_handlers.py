@@ -62,6 +62,7 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
                 context["db_table"] = config.get("db_table")
                 context["db_url"] = config.get("db_url")
                 context["db_schema"] = config.get("db_schema")
+                context["db_warehouse"] = config.get("db_warehouse")
                 context["ai_engine"] = config.get("ai_engine")
                 context["chat_history_size"] = config.get("chat_history_size")
                 context["debug"] = config.get("debug")
@@ -132,11 +133,14 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
     ack()
 
     logger.info(f"get_db_tables!!!")
-    respond(text=DEFAULT_LOADING_TEXT)
 
     api_key = context.get("api_key")
     db_url = context.get("db_url")
     db_schema = context.get("db_schema")
+    db_warehouse = context.get("db_warehouse")
+
+    respond(text=DEFAULT_LOADING_TEXT + f", db_url={db_url}, db_schema={db_schema}, db_warehouse={db_warehouse}")
+
 
     value = command['text']
 
@@ -153,10 +157,13 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
     user_id = context.actor_user_id or context.user_id
 
     try:
-        loading_text = fetch_data_from_genieapi(api_key=api_key,
-                                                endpoint="/list/user/database_connection/tables",
-                                                db_schema=db_schema,
-                                                resourcename=value)
+        loading_text = fetch_data_from_genieapi(
+            api_key=api_key,
+            endpoint="/list/user/database_connection/tables",
+            db_schema=db_schema,
+            db_warehouse=db_warehouse,
+            resourcename=value
+        )
         json_obj = loading_text["result"]
         blocks = []
         for c in json_obj:
@@ -591,6 +598,91 @@ def handle_set_experimental_features_func(ack, command, respond, context: BoltCo
     respond(text=f"Experimental features set to: {value}")  # Respond to the command
 
 
+def handle_set_db_warehouse_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
+                                 s3_client,
+                                 AWS_STORAGE_BUCKET_NAME):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"handle_set_warehouse!!!, value={value}")
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    if value is None or value == "":
+        respond(text="You must provide a value. eg /set_warehouse test123")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("db_warehouse", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"db_warehouse set to: {value}")  # Respond to the command
+
+
+def handle_get_db_warehouses_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
+                                  payload: dict):
+    # Acknowledge command request
+    ack()
+
+    logger.info(f"handle_get_db_warehouses_func!!!")
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    api_key = context.get("api_key")
+    db_url = context.get("db_url")
+
+    value = command['text']
+
+    if value == "":
+        value = db_url
+
+    if value is None or value == "":
+        respond(
+            text=f"Get DB Warehouses requires one argument Or a previously set DB with /use_db or /set_db_url")  # Respond to the command
+        return send_help_buttons(context.channel_id, client, "")
+
+    is_in_dm_with_bot = True
+    messages = []
+    user_id = context.actor_user_id or context.user_id
+
+    try:
+        loading_text = fetch_data_from_genieapi(api_key=api_key,
+                                                endpoint="/list/user/database_connection/warehouses",
+                                                resourcename=value)
+        json_obj = loading_text["result"]
+        blocks = []
+        for c in json_obj:
+            blocks.append({
+                "type": "section",
+                "text": {
+                    "type": "mrkdwn",
+                    "text": f"{c}"
+                },
+                "accessory": {
+                    "type": "button",
+                    "text": {
+                        "type": "plain_text",
+                        "text": f"Use {c} Warehouse"
+                    },
+                    "value": c,  # This will be passed to the action handler when clicked
+                    "action_id": f"button:set_db_warehouse:{c}"
+                }
+            })
+        respond(blocks=blocks)
+
+        post_wip_message_with_attachment(
+            client=client,
+            channel=context.channel_id,
+            thread_ts=payload.get("thread_ts") if is_in_dm_with_bot else payload["ts"],
+            loading_text=loading_text,
+            messages=messages,
+            user=user_id,
+            context=context,
+        )
+
+    except Exception as e:
+        traceback.print_exc()
+        logger.exception(e)
+        respond(text=f"Failed to get DB Warehouses")  # Respond to the command
+        return send_help_buttons(context.channel_id, client, "")
+
+
 def handle_query_selected_action(ack, context, client, payload, respond, id):
     ack()
     api_key = context["api_key"]
@@ -718,6 +810,7 @@ def get_bucket_key(context, key, logger):
     if key == "db_table" \
             or key == "db_url" \
             or key == "db_schema" \
+            or key == "db_warehouse" \
             or key == "ai_engine" \
             or key == "debug" \
             or key == "experimental_features" \

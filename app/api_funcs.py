@@ -12,6 +12,7 @@ def get_language_to_sql(context, client, payload, messages, logger, text_query):
     ai_engine = context.get("ai_engine")
     experimental_features = context.get("experimental_features")
     chat_history_size = context.get("chat_history_size")
+    db_warehouse = context.get("db_warehouse")
 
     is_in_dm_with_bot = payload.get("channel_type") == "im"
     user_id = context.actor_user_id or context.user_id
@@ -41,6 +42,7 @@ def get_language_to_sql(context, client, payload, messages, logger, text_query):
         ai_engine=ai_engine,
         execute_sql=False,
         experimental_features=experimental_features,
+        db_warehouse=db_warehouse
     )
 
     chat_history_id = initial_request.get("chat_history_id", None)
@@ -63,7 +65,6 @@ def get_language_to_sql(context, client, payload, messages, logger, text_query):
     if processing_sql_status != "processing_sql":
         raise Exception("Max retries reached without a successful response")
 
-
     processing_sql = fetch_data_from_genieapi(
         api_key=api_key,
         endpoint="/language_to_sql_process",
@@ -85,7 +86,6 @@ def get_language_to_sql(context, client, payload, messages, logger, text_query):
         user=user_id,
         context=context,
     )
-
 
     loading_text = fetch_data_from_genieapi(
         api_key=api_key,

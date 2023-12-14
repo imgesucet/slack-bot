@@ -100,6 +100,16 @@ features:
       usage_hint: "[true]"
       should_escape: false
       url: https://gptinslack.opengenie.ai/slack/events
+    - command: /set_db_warehouse
+      description: Set DB Warehouse
+      usage_hint: "[warehouse01]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
+    - command: /get_db_warehouses
+      description: Get DB Warehouses
+      usage_hint: "[bold-sky]"
+      should_escape: false
+      url: https://gptinslack.opengenie.ai/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.opengenie.ai/slack/oauth_redirect
