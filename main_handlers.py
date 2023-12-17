@@ -64,6 +64,8 @@ def set_s3_openai_api_key_func(context: BoltContext, next_, logger: logging.Logg
                 context["db_schema"] = config.get("db_schema")
                 context["db_warehouse"] = config.get("db_warehouse")
                 context["ai_engine"] = config.get("ai_engine")
+                context["ai_model"] = config.get("ai_model")
+                context["ai_temp"] = config.get("ai_temp")
                 context["chat_history_size"] = config.get("chat_history_size")
                 context["debug"] = config.get("debug")
                 context["experimental_features"] = config.get("experimental_features")
@@ -140,7 +142,6 @@ def handle_get_db_tables_func(ack, command, respond, context: BoltContext, logge
     db_warehouse = context.get("db_warehouse")
 
     respond(text=DEFAULT_LOADING_TEXT + f", db_url={db_url}, db_schema={db_schema}, db_warehouse={db_warehouse}")
-
 
     value = command['text']
 
@@ -450,8 +451,8 @@ def handle_login_func(ack, command, respond, context: BoltContext, logger: loggi
         text=f"A confirmation email has been sent to: {value}, please confirm your login by accepting it.")  # Respond to the command
 
 
-def handle_use_db_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client, s3_client,
-                       AWS_STORAGE_BUCKET_NAME):
+def handle_use_db_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
+                       s3_client, AWS_STORAGE_BUCKET_NAME):
     # Acknowledge command request
     ack()
 
@@ -599,8 +600,7 @@ def handle_set_experimental_features_func(ack, command, respond, context: BoltCo
 
 
 def handle_set_db_warehouse_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
-                                 s3_client,
-                                 AWS_STORAGE_BUCKET_NAME):
+                                 s3_client, AWS_STORAGE_BUCKET_NAME):
     # Acknowledge command request
     ack()
 
@@ -681,6 +681,40 @@ def handle_get_db_warehouses_func(ack, command, respond, context: BoltContext, l
         logger.exception(e)
         respond(text=f"Failed to get DB Warehouses")  # Respond to the command
         return send_help_buttons(context.channel_id, client, "")
+
+
+def handle_set_ai_model_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
+                             s3_client, AWS_STORAGE_BUCKET_NAME):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"handle_set_ai_model!!!, value={value}")
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    if value is None or value == "":
+        respond(text="You must provide a value. eg /set_ai_model test123")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("ai_model", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"ai_model set to: {value}")  # Respond to the command
+
+
+def handle_set_ai_temp_func(ack, command, respond, context: BoltContext, logger: logging.Logger, client,
+                            s3_client, AWS_STORAGE_BUCKET_NAME):
+    # Acknowledge command request
+    ack()
+
+    value = command['text']
+    logger.info(f"handle_set_ai_temp!!!, value={value}")
+    respond(text=DEFAULT_LOADING_TEXT)
+
+    if value is None or value == "":
+        respond(text="You must provide a value. eg /set_ai_temp test123")
+        return send_help_buttons(context.channel_id, client, "")
+
+    save_s3("ai_temp", value, logger, context, s3_client, AWS_STORAGE_BUCKET_NAME)
+    respond(text=f"ai_temp set to: {value}")  # Respond to the command
 
 
 def handle_query_selected_action(ack, context, client, payload, respond, id):
@@ -812,6 +846,8 @@ def get_bucket_key(context, key, logger):
             or key == "db_schema" \
             or key == "db_warehouse" \
             or key == "ai_engine" \
+            or key == "ai_model" \
+            or key == "ai_temp" \
             or key == "debug" \
             or key == "experimental_features" \
             or key == "chat_history_size":

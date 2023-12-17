@@ -90,6 +90,14 @@ features:
       description: Get DB Warehouses
       usage_hint: "[bold-sky]"
       should_escape: false
+    - command: /dset_ai_temp
+      description: Set ai_temp
+      usage_hint: "[0.0]"
+      should_escape: false
+    - command: /dset_ai_model
+      description: Set ai_model
+      usage_hint: "[gpt-3.5-turbo-1106]"
+      should_escape: false
 oauth_config:
   scopes:
     bot:

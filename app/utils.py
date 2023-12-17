@@ -102,7 +102,9 @@ def fetch_data_from_genieapi(
         client=None,
         channel=None,
         thread_ts=None,
-        db_warehouse=None
+        db_warehouse=None,
+        ai_model=None,
+        ai_temp=None,
 ):
     # Set defaults
     URL_DEFAULT = os.environ.get("GENIEAPI_HOST", "https://genieapi.defytrends.dev/api")
@@ -137,6 +139,10 @@ def fetch_data_from_genieapi(
         PARAMS_DEFAULT["db_schema"] = db_schema
     if ai_engine:
         PARAMS_DEFAULT["ai_engine"] = ai_engine
+    if ai_model is not None:
+        PARAMS_DEFAULT["ai_model"] = ai_model
+    if ai_temp is not None:
+        PARAMS_DEFAULT["ai_temp"] = ai_temp
     if id:
         PARAMS_DEFAULT["id"] = id
     if execute_sql is not None:
@@ -145,6 +151,7 @@ def fetch_data_from_genieapi(
         PARAMS_DEFAULT["is_experimental"] = experimental_features
     if db_warehouse is not None:
         PARAMS_DEFAULT["db_warehouse"] = db_warehouse
+
 
     headers = {"X-API-Key": api_key}
 

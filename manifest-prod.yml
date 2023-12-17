@@ -110,6 +110,16 @@ features:
       usage_hint: "[bold-sky]"
       should_escape: false
       url: https://gptinslack.defytrends.dev/slack/events
+    - command: /pset_ai_temp
+      description: Set ai_temp
+      usage_hint: "[0.0]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
+    - command: /pset_ai_model
+      description: Set ai_model
+      usage_hint: "[gpt-3.5-turbo-1106]"
+      should_escape: false
+      url: https://gptinslack.defytrends.dev/slack/events
 oauth_config:
   redirect_urls:
     - https://gptinslack.defytrends.dev/slack/oauth_redirect

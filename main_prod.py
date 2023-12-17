@@ -23,7 +23,7 @@ from main_handlers import handle_use_db_func, handle_suggest_func, handle_previe
     render_home_tab_func, handle_login_func, handle_set_key_func, handle_set_db_schema_func, handle_suggest_tables_func, \
     handle_set_ai_engine_func, handle_get_db_schemas_func, handle_show_queries_func, handle_query_selected_action, \
     handle_set_debug_func, handle_set_experimental_features_func, handle_set_db_warehouse_func, \
-    handle_get_db_warehouses_func
+    handle_get_db_warehouses_func, handle_set_ai_model_func, handle_set_ai_temp_func
 from main_prod_funcs import validate_api_key_registration, save_api_key_registration
 from slack_handler import SlackRequestHandler
 from slack_s3_oauth_flow import LambdaS3OAuthFlow
@@ -288,23 +288,45 @@ def handle_get_db_warehouses(ack, command, respond, context: BoltContext, logger
                      args=(ack, command, respond, context, logger, client, payload)).start()
 
 
+@app.command(f"/{PREFIX}set_ai_model")
+def handle_set_ai_model(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
+    threading.Thread(target=handle_set_ai_model_func,
+                     args=(ack, command, respond, context, logger, client, s3_client,
+                           AWS_STORAGE_BUCKET_NAME)).start()
+
+
+@app.command(f"/{PREFIX}set_ai_temp")
+def handle_set_ai_temp(ack, command, respond, context: BoltContext, logger: logging.Logger, client):
+    threading.Thread(target=handle_set_ai_temp_func,
+                     args=(ack, command, respond, context, logger, client, s3_client,
+                           AWS_STORAGE_BUCKET_NAME)).start()
+
+
 @app.action(re.compile("^help:"))
 def handle_help_actions(ack, body, say):
     return handle_help_actions_func(ack, body, say)
 
 
 @app.action(re.compile("^button:.+:.+"))
-def handle_buttons_actions(ack, body, respond, context: BoltContext, logger: logging.Logger, client):
+def handle_buttons_actions(ack, body, respond, context: BoltContext, logger: logging.Logger, client, payload):
     _, action, parameter = body['actions'][0]['action_id'].split(':')
     command = {"text": parameter}
+    ack()
     if action == 'use_db':
         threading.Thread(target=handle_use_db_func,
-                         args=(ack, command, respond, context, logger, client, s3_client,
-                               AWS_STORAGE_BUCKET_NAME)).start()
+                         args=(ack, command, respond, context, logger, client,
+                               s3_client, AWS_STORAGE_BUCKET_NAME)).start()
     if action == "set_db_table":
-        threading.Thread(target=handle_set_db_table,
-                         args=(ack, command, respond, context, logger, client, s3_client,
-                               AWS_STORAGE_BUCKET_NAME)).start()
+        threading.Thread(target=handle_set_db_table_func,
+                         args=(ack, command, respond, context, logger, client, payload,
+                               s3_client, AWS_STORAGE_BUCKET_NAME)).start()
+
+    if action == "set_db_warehouse":
+        threading.Thread(target=handle_set_db_warehouse_func,
+                         args=(ack, command, respond, context, logger, client,
+                               s3_client, AWS_STORAGE_BUCKET_NAME)).start()
+
+
 
 
 @app.action("query_selected")

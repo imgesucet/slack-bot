@@ -10,10 +10,11 @@ def get_language_to_sql(context, client, payload, messages, logger, text_query):
     db_url = context.get("db_url")
     db_schema = context.get("db_schema")
     ai_engine = context.get("ai_engine")
+    ai_model = context.get("ai_model")
+    ai_temp = context.get("ai_temp")
     experimental_features = context.get("experimental_features")
     chat_history_size = context.get("chat_history_size")
     db_warehouse = context.get("db_warehouse")
-
     is_in_dm_with_bot = payload.get("channel_type") == "im"
     user_id = context.actor_user_id or context.user_id
 
@@ -40,6 +41,8 @@ def get_language_to_sql(context, client, payload, messages, logger, text_query):
         user_id=context.user_id,
         db_schema=db_schema,
         ai_engine=ai_engine,
+        ai_model=ai_model,
+        ai_temp=ai_temp,
         execute_sql=False,
         experimental_features=experimental_features,
         db_warehouse=db_warehouse

@@ -403,6 +403,8 @@ def preview_table(context, client, payload, value):
     db_schema = context.get("db_schema")
     db_warehouse = context.get("db_warehouse")
     ai_engine = context.get("ai_engine")
+    ai_model = context.get("ai_model")
+    ai_temp = context.get("ai_temp")
 
     table_name = value
     text_query = f"get 10 sample rows for {table_name}"
@@ -415,6 +417,8 @@ def preview_table(context, client, payload, value):
         is_generate_code=False,
         db_schema=db_schema,
         ai_engine=ai_engine,
+        ai_model=ai_model,
+        ai_temp=ai_temp,
         db_warehouse=db_warehouse,
     )
 
