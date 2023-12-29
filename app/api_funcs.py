@@ -80,6 +80,7 @@ def get_language_to_sql(context, client, payload, messages, logger, text_query):
         MAX_RETRIES=30,
         DELAY_FACTOR=0,
     )
+
     post_wip_message_with_attachment(
         client=client,
         channel=context.channel_id,
@@ -89,6 +90,9 @@ def get_language_to_sql(context, client, payload, messages, logger, text_query):
         user=user_id,
         context=context,
     )
+    status = processing_sql.get("status", "")
+    if status == 3:
+        raise Exception("Max retries reached without a successful response")
 
     loading_text = fetch_data_from_genieapi(
         api_key=api_key,
